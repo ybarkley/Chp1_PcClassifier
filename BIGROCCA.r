@@ -58,18 +58,11 @@ for(i in names){
   assign(i, read.csv(filepath, header=F))  ###MAKE HEADER 'F' IN CASE THERE ARE MORE COLUMNS THAN COLUMN NAMES!!!
 }
 
-
-
-
-library('gtools')
-
-
+#Bind the different dataframes and save as one file
 do.call(smartbind, my_data)
-
 bindIT<-smartbind(temp)
-
 write.csv(bindIT, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Data\\PcMHI28_Enc06_20101211_RoccaContourStats_ALL.csv', row.names=F)
 
-
+###
 
 
