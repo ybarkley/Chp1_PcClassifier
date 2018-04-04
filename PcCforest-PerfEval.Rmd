@@ -118,21 +118,83 @@ n_samps = 5        #Zack: number of times you want to resample from your dataset
 # accuracies <- c()
 # pred.table=NULL
  # fit <- randomForest(formPc, data=train.pm, ntree=1000, importance=TRUE, replace=TRUE, mtry=5)
- 
-#using party
-ptm<-proc.time()
- cfit2 <- cforest(cformPc, data=train.pm,  controls=cforest_control(mincriterion = 0,ntree=500, mtry = 7, minsplit = 10L, minbucket = 5L))
- proc.time() - ptm
-OOBkit2 <- table(train.pm$population, predict(cfit2, OOB = TRUE, type = 'response')) 
-1-(sum(diag(OOBkit2))/nrow(train.pm)) 
 
-#using partykit
+### 
+#using party 
+#PvMvN
+ptm<-proc.time()
+ cfit <- cforest(cformPc, data=train,  controls=cforest_control(mincriterion = 0,ntree=1000, mtry = 7, minsplit = 10L, minbucket = 5L))
+OOBkit <- table(train$population, predict(cfit, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit))/nrow(train)) 
+
+cfita <- cforest(cformPc, data=train,  controls=cforest_control(maxsurrogate=0, mincriterion = 0,ntree=1000, mtry = 5, minsplit = 4L, minbucket = 2L))
+OOBkita <- table(train$population, predict(cfita, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkita))/nrow(train))
+
+cfit.un <- cforest(cformPc, data=train,  controls=cforest_control(maxsurrogate=0, mincriterion = 0,ntree=1500, mtry = 7, minsplit = 4L, minbucket = 2L))
+OOBkit.un <- table(train$population, predict(cfit.un, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit.un))/nrow(train))
+
+ proc.time() - ptm
+
+#PvM
+ptm<-proc.time()
+ cfit1 <- cforest(cformPc, data=train.pm,  controls=cforest_control( mincriterion = 0,ntree=1000, mtry = 7, minsplit = 10L, minbucket = 5L))
+
+OOBkit1 <- table(train.pm$population, predict(cfit1, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit1))/nrow(train.pm)) 
+ proc.time() - ptm
+
+ 
+#single tree  PvM
+ctree1.p <- ctree(cformPc, data = train.pm, controls=ctree_control(maxsurrogate = 0,  minsplit = 10L, minbucket = 5L, mincriterion = 0))
+OOBtree1.p <- table(train.pm$population, predict(ctree1.p), dnn = c("Actual species", "Predicted species"))
+1-(sum(diag(OOBtree1.p))/nrow(train.pm))
+#single tree  PvMvN
+ctree2.p <- ctree(cformPc, data = train, controls=ctree_control(maxsurrogate = 0,  minsplit = 10L, minbucket = 5L, mincriterion = 0))
+OOBtree2.p <- table(train$population, predict(ctree2.p), dnn = c("Actual species", "Predicted species"))
+1-(sum(diag(OOBtree2.p))/nrow(train))
+
+
+
+
+####
+#using partykit 
+#PvMvN
+detach("package:party", unload=TRUE)
+ library(partykit)
+ptm<-proc.time()
+cfit2 <- cforest(cformPc, data=train, ntree=1000, mtry = 7, control=ctree_control(mincriterion = 0, minsplit = 10L, minbucket = 5L)) 
+
+OOBkit2 <- table(train$population, predict(cfit2, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit2))/nrow(train)) 
+proc.time() - ptm
+
+#PvM
+ptm<-proc.time()
+cfit3 <- cforest(cformPc, data=train.pm, ntree=1000, mtry = 7, control=ctree_control(mincriterion = 0, minsplit = 10L, minbucket = 5L)) 
+
+OOBkit3 <- table(train.pm$population, predict(cfit3, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit3))/nrow(train.pm)) 
+proc.time() - ptm
+
+#single tree
+ctree1.pk <- ctree(cformPc, data = train.pm, scores=T, control=ctree_control(maxsurrogate = 3, minsplit = 10L, minbucket = 5L, mincriterion = 0.05))
+OOBtree1.pk <- table(train.pm$population, predict(ctree1.pk), dnn = c("Actual species", "Predicted species"))
+
+
+
+#using partykit for PvMvN
+
+
 ptm<-proc.time()
 cfit3 <- cforest(cformPc, data=train, ntree=500, mtry = 7, control=ctree_control(mincriterion = 0, minsplit = 10L, minbucket = 5L)) 
 proc.time() - ptm
 
-OOBkit3 <- table(train.pm$population, predict(cfit3, OOB = TRUE, type = 'response')) 
-1-(sum(diag(OOBkit3))/nrow(train.pm)) 
+OOBkit3 <- table(train$population, predict(cfit3, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit3))/nrow(train))
+
+
  # #Equivalent of the confusion matrix provided by randomForest
  # OOBkit <- table(train.pm$population, predict(cfit, OOB = TRUE, type = 'response'))
  # #Calculates the overall OOB
@@ -229,9 +291,13 @@ for(rep in 1:n_samps){
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 7 
-ntree_vals = seq(101,201,50) #from, to, by
-ctune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
+mtry_vals = c(5:10) 
+ntree_vals = seq(501,1001,50) #from, to, by
+maxsurr_vals = c(0:2)
+minsplit_vals = c(8L, 6L, 4L)
+minbucket_vals = c(4L, 3L, 2L)
+
+ctune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals, maxsurrogate=maxsurr_vals, minsplit=minsplit_vals, minbucket = minbucket_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
 #### Run Optimization Sequence ####

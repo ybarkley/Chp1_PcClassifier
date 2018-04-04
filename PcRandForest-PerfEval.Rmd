@@ -83,7 +83,7 @@ pcdata<- pcdata[, c(61, 1:60)]
 
 Correlation Stuff
 ```{r}
-##Calculate Pearson's correlation coefficient for all variables. Remove variables -0.70 > r > 0.70.
+##Calculate Pearson's correlation coefficient for all variables. Remove #variables -0.70 > r > 0.70.
 pcsub<-pcdata[,7:53]
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
@@ -91,8 +91,8 @@ tmp[upper.tri(tmp)] <- 0
 diag(tmp) <- 0
 pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
-  pcdata <- cbind(pcdata[, c(1:4)], pcsub)
-  corrplot.mixed(cor(pcdata[,5:30]), upper="circle", lower="number") # for a visual representation of the correlation
+  pcdata.un <- cbind(pcdata[, c(1:4)], pcsub)
+  corrplot.mixed(cor(pcdata.un[,5:30]), upper="circle", lower="number") # for a visual representation of the correlation
 ```
 
 
@@ -221,7 +221,7 @@ registerDoParallel(cl, cores = detectCores())
 # for the RF model with 'population' as the response and time-frequency measurements 
 
 ## UNCORRELATED VARIABLES
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[5:30],collapse="+")))
+cformPc <- as.formula(paste("population ~ ", paste(names(pcdata)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
 formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:53],collapse="+"))) #Use variables to classify to population
