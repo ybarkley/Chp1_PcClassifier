@@ -56,7 +56,7 @@ colnames(ROCCAdata)[100] <- "Tt"
 
 #Remove unnecessary columns
 
-pcdata <- ROCCAdata[, -c(1:3, 5:7, 11:13, 21, 22, 34:37, 68:92, 101)]
+pcdata <- ROCCAdata[, -c(1:3, 5:7, 11:13, 21, 22, 34:37, 69:92, 101)]
 pcdata %>% mutate_if(is.factor, as.character) -> pcdata
 pcdata %>% mutate_if(is.character, as.factor) -> pcdata
 
@@ -71,7 +71,7 @@ pcdata[pcdata$group %in% c(26:30), "population"] <- "mhi"
 pcdata[pcdata$group %in% c(14:17), "population"] <- "nwhi"
 pcdata[pcdata$group %in% c(1:8), "population"] <- "pel"
 pcdata$population <- as.factor(pcdata$population)
-pcdata<- pcdata[, c(61, 1:60)]
+pcdata<- pcdata[, c(62, 1:61)]
 
 # Id_count <- pcdata[, c(1,3)] #Check it out
 
@@ -98,10 +98,13 @@ pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 #Set up encounters for RF
 ```{r}
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE wOLD.csv')
+
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
 NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = 26:30    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+MHI = 26:30
+MHI = c(26:30, 32,34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 #This is set up to be flexible to change later if needed
 nrep  = 4           # multiplier for total number of groups
@@ -112,7 +115,7 @@ w = 90              # Number of whistles randomly pulled from each group
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 5        #Zack: number of times you want to resample from your dataset
 
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:53],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
 
 
@@ -145,8 +148,9 @@ formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:53],collapse="
 
 Meat of the Analysis
 
-```{r}
+```{r warning=FALSE, message=FALSE}
 #### Start ####
+ptm<-proc.time()
 
 output_WhistleClass =NULL
 output_EncounterClass=NULL
@@ -200,7 +204,7 @@ for(rep in 1:n_samps){
 #}
   
   
-ptm<-proc.time() 
+ 
 
 
 #### Tuning parameters ####
@@ -224,7 +228,7 @@ registerDoParallel(cl, cores = detectCores())
 cformPc <- as.formula(paste("population ~ ", paste(names(pcdata)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:53],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
@@ -345,19 +349,20 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 
 }
 
+ proc.time() - ptm
 ```
 
 
 ###Write outputs to file
 ```{r}
-write.table(output_EncounterClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_20180327.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_EncounterClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_20180409.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_20180327.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_20180409.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_ConfMat, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_20180327.csv", append = T, col.names=F, sep = ",")
+write.table(output_ConfMat, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_20180409.csv", append = T, col.names=F, sep = ",")
 
-write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_20180327.csv", append = T, col.names=F, sep = ",")
-write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestSets_20180327.csv", append = T, col.names=F, sep = ",")
+write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_20180409.csv", append = T, col.names=F, sep = ",")
+write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestSets_20180409.csv", append = T, col.names=F, sep = ",")
 
-write.table(varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalImportantVars_20180327.csv", append = T, col.names=T, sep = ",")
+write.table(varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalImportantVars_20180409.csv", append = T, col.names=T, sep = ",")
 ```
