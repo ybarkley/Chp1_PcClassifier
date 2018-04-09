@@ -108,6 +108,9 @@ pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 #Set up encounters for RF
 ```{r}
+
+pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
 NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
@@ -120,7 +123,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 90              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 5        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:53],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata.pm)[8:31],collapse="+"))) #Use variables to classify to encounter
@@ -155,7 +158,7 @@ n_samps = 5        #Zack: number of times you want to resample from your dataset
 
 Meat of the Analysis
 
-```{r message=F, warning=F}
+```{r message=FALSE, warning=FALSE}
 
 ptm<-proc.time() 
 
@@ -229,8 +232,10 @@ for(rep in 1:n_samps){
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 mtry_vals = 5:10 
-ntree_vals = seq(501,1001,50) #from, to, by
-tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
+ntree_vals = seq(501,3001,50) #from, to, by
+#node_vals=1:3
+
+tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)#, nodesize = node_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
 #### Run Optimization Sequence ####
@@ -247,7 +252,7 @@ registerDoParallel(cl, cores = detectCores())
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:53],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
@@ -256,7 +261,7 @@ formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:53],collaps
 
 x = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
     library(randomForest)
-    do_RF = randomForest(formPc, data = train.pm, test = test.pm, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])
+    do_RF = randomForest(formPc, data = train.pm, test = test.pm, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])#, nodesize = tune_settings$nodesize[i])
     print(do_RF$err.rate[tune_settings$ntree[i],])
   }
 
@@ -298,15 +303,23 @@ tuned.pmAll <- rbind(tuned.pmAll, tuned.pm)
   
   ####RESULTS!!!#####  
   results.pmtemp <- table(test.pm$population, prediction.pm)  # conf matrix of individual whistle classification
-  results.pm = results.pm + results.pmtemp
+  
+  #calculate % accuracies of diagonal by population from confusion matrix of percentages
+pel.pel<-round((results.pmtemp[1,1])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2) #pelagic
+mhi.mhi<-round((results.pmtemp[2,2])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) #mhi 
+  #calculate misclassification for pelagic
+pel.mhi<-round((results.pmtemp[1,2])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2)
+mhi.pel<-round((results.pmtemp[2,1])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) 
+   
+
   # Important Variables
   varIMPtemp.pm <- as.data.frame(importance(fit.pm))
   varIMP.pm <- varIMPtemp.pm[order(varIMPtemp.pm$MeanDecreaseGini), , drop =F]
   varIMPtotal.pm <- rbind(varIMPtotal.pm, "REP"=rep, varIMP.pm)
 
   
-  
-  #calculate % accuracies of diagonal by population from confusion matrix of percentages
+   results.pm = results.pm + results.pmtemp 
+#calculate % accuracies of diagonal by population from confusion matrix of percentages
 pel.pel<-round((results.pm[1,1])/(results.pm[1,1]+results.pm[1,2])*100,2) #pelagic
 mhi.mhi<-round((results.pm[2,2])/(results.pm[2,1]+results.pm[2,2])*100,2) #mhi
 #mhi.mhi<-round((results[3,3])/(results[3,1]+results[3,2]+results[3,3])*100,2) #mhi
@@ -400,7 +413,7 @@ sdRealM <- sd(realM)
 sdFakeM <- sd(fakeM)
 
 #Combine means and std errors into matrix
-sink("ConfMatrix_means.txt", append=T)
+sink("ConfMatrix_means_20180409.txt", append=T)
 PMmeans <- rbind("PEL"= c(meanRealP, meanFakeP), "MHI"=c(meanRealM, meanFakeM))
 colnames(PMmeans) <- c("PEL", "MHI")
 w
@@ -408,7 +421,7 @@ n_samps
 PMmeans
 sink()
 
-sink("ConfMatrix_stddevs.txt", append=T)
+sink("ConfMatrix_stddevs_20180409.txt", append=T)
 PMsds <- rbind("PEL"= c(sdRealP, sdFakeP), "MHI"=c(sdRealM, sdFakeM))
 colnames(PMsds) <- c("PEL", "MHI")
 w
