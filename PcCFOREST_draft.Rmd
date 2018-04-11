@@ -1,0 +1,53 @@
+---
+title: "CForest Classifer"
+author: "Yvonne Barkley"
+date: "April 9, 2017"
+output: html_document
+---
+
+```{r warning=FALSE, message=FALSE}
+library(sqldf)
+library(randomForest)
+library(partykit)
+library(caret)
+library(corrplot)
+library(parallel); 
+library(doParallel);
+library(gtools)
+library(devtools) 
+library(dplyr)
+library(data.table)
+library(Hmisc)
+library(ggplot2)
+
+
+```
+
+
+cptm<-proc.time()
+
+ cfit <- cforest(cformPc, data=ctrain,  controls=cforest_control(mincriterion = 0,ntree=1500, mtry = 6, minsplit = 10L, minbucket = 5L))
+
+OOBkit <- table(train$population, predict(cfit, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit))/nrow(train)) 
+
+cprediction <-predict(cfit, newdata=ctest, predict.all = F, type='response') 
+ctest$rightPred <- as.character(cprediction) == as.character(ctest$population) 
+
+varimp(cfit, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
+conditional = FALSE, threshold = .2, ...))
+ proc.time() - cptm
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 

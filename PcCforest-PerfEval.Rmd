@@ -12,7 +12,7 @@ output:
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
-```{r warning=F, message=F}
+```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
 library(partykit)
@@ -61,7 +61,7 @@ colnames(ROCCAdata)[100] <- "Tt"
 
 #Remove unnecessary columns
 
-pcdata <- ROCCAdata[, -c(1:3, 5:7, 11:13, 21, 22, 34:37, 68:92, 101)]
+pcdata <- ROCCAdata[, -c(1:3, 5:7, 11:13, 21, 22, 34:37, 69:92, 101)]
 pcdata %>% mutate_if(is.factor, as.character) -> pcdata
 pcdata %>% mutate_if(is.character, as.factor) -> pcdata
 
@@ -76,7 +76,9 @@ pcdata[pcdata$group %in% c(26:30), "population"] <- "mhi"
 pcdata[pcdata$group %in% c(14:17), "population"] <- "nwhi"
 pcdata[pcdata$group %in% c(1:8), "population"] <- "pel"
 pcdata$population <- as.factor(pcdata$population)
-pcdata<- pcdata[, c(61, 1:60)]
+pcdata<- pcdata[, c(62, 1:61)]
+
+write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv', row.names = F)
 
 pcdata.pm <- droplevels(subset(pcdata, population == 'pel' | population == 'mhi'))
 
@@ -96,6 +98,9 @@ pcdata.pm <- droplevels(subset(pcdata, population == 'pel' | population == 'mhi'
 
 #Set up encounters for RF
 ```{r}
+
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
 NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
@@ -123,7 +128,7 @@ n_samps = 5        #Zack: number of times you want to resample from your dataset
 #using party 
 #PvMvN
 ptm<-proc.time()
- cfit <- cforest(cformPc, data=train,  controls=cforest_control(mincriterion = 0,ntree=1000, mtry = 7, minsplit = 10L, minbucket = 5L))
+ cfit <- cforest(cformPc, data=train,  controls=cforest_control(mincriterion = 0,ntree=1500, mtry = 7, minsplit = 10L, minbucket = 5L))
 OOBkit <- table(train$population, predict(cfit, OOB = TRUE, type = 'response')) 
 1-(sum(diag(OOBkit))/nrow(train)) 
 
@@ -139,10 +144,13 @@ OOBkit.un <- table(train$population, predict(cfit.un, OOB = TRUE, type = 'respon
 
 #PvM
 ptm<-proc.time()
- cfit1 <- cforest(cformPc, data=train.pm,  controls=cforest_control( mincriterion = 0,ntree=1000, mtry = 7, minsplit = 10L, minbucket = 5L))
-
-OOBkit1 <- table(train.pm$population, predict(cfit1, OOB = TRUE, type = 'response')) 
-1-(sum(diag(OOBkit1))/nrow(train.pm)) 
+ cfit1 <- cforest(cformPc, data=train.pm,  controls=cforest_control( mincriterion = 0,ntree=1500, mtry = 7, minsplit = 4L, minbucket = 2L))
+ OOBkit1 <- table(train.pm$population, predict(cfit1, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit1))/nrow(train.pm))
+ cfit2 <- cforest(cformPc, data=train.pm,  controls=cforest_control( mincriterion = 0,ntree=2000, mtry = 7, minsplit = 4L, minbucket = 2L))
+ OOBkit2 <- table(train.pm$population, predict(cfit2, OOB = TRUE, type = 'response')) 
+1-(sum(diag(OOBkit2))/nrow(train.pm))
+ 
  proc.time() - ptm
 
  
@@ -539,3 +547,5 @@ for(i in c(MHI)){
 
 
 ```
+
+
