@@ -34,7 +34,7 @@ df3<-setDF(vars.dt[, as.list(unlist(lapply(.SD, function(x) list(mean=mean(x),me
 population<- c('mhi','mhi','mhi','mhi','mhi','nwhi','nwhi','nwhi','nwhi','pel','pel','pel','pel','pel','pel','pel','pel')
 df3 <- cbind(population, df3)
 
-df.mean_sd <- setDF(vars.dt[, as.list(unlist(lapply(.SD, function(x) list(mean=mean(x), sd=sd(x))))), by="EncounterID", .SDcols=varsOnly[,2:48]])
+df.mean_sd <- setDF(vars.dt[, as.list(unlist(lapply(.SD, function(x) list(mean=mean(x), sd=sd(x))))), by="EncounterID", .SDcols=colnames(varsOnly[,2:48])])
 
 df.median_IQR <- setDF(vars.dt[, as.list(unlist(lapply(.SD, function(x) list(median=median(x), IQR=IQR(x), quantile(x, 0.25, type=2), quantile(x, 0.75, type=2), range=range(x))))), by="EncounterID", .SDcols=varsOnly[,2:48]])
                           

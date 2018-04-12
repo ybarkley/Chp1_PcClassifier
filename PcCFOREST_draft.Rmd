@@ -8,7 +8,7 @@ output: html_document
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
-library(partykit)
+library(party)
 library(caret)
 library(corrplot)
 library(parallel); 
@@ -17,34 +17,167 @@ library(gtools)
 library(devtools) 
 library(dplyr)
 library(data.table)
-library(Hmisc)
 library(ggplot2)
 
 
 ```
 
 
+pcdata<-read.csv('C:\\Users\\yvers\\Documents\\CHP1\\code\\Chp1_PcClassifier-master/BIG ROCCA FILE.csv')
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
+NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
+MHI = 26:30
+MHI = c(26:28,30)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+                              # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
+#This is set up to be flexible to change later if needed
+nrep  = 4           # multiplier for total number of groups
+npel  = 1           # number of pelagic schools to group together
+nnwhi = 1           # number of northwest HI schools to group together
+nmhi  = 1           # number of main HI schools to group together
+w = 90              # Number of whistles randomly pulled from each group 
+ntest = 1           # number of groups to randomly pull for test dataset
+n_samps = 1        #Zack: number of times you want to resample from your dataset
+
+cformPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
+```{r}
 cptm<-proc.time()
 
- cfit <- cforest(cformPc, data=ctrain,  controls=cforest_control(mincriterion = 0,ntree=1500, mtry = 6, minsplit = 10L, minbucket = 5L))
+tunedAll = NULL
+results.pm = matrix(0, nrow = 3, ncol = 3)
+for(rep in 1:n_samps){ 
+  
+  set.seed(rep) #YB placed the seed inside the loop bc it wasn't duplicating trees
+  
+  # Total groups included
+  #This randomly samples 'nrep' groups from each population
+  N_pel = as.numeric(sample(PEL, nrep*npel))
+  N_nwhi  = as.numeric(sample(NWHI, nrep*nnwhi))
+  N_mhi  = as.numeric(sample(MHI, nrep*nmhi))
+  
+  # Test data 
+  #Randomly sample 1 group out of the selected groups for each population to be included in the test dataset later
+  test_pel= as.integer(sample(N_pel, ntest))
+  test_nwhi= as.integer(sample(N_nwhi, ntest))
+  test_mhi= as.integer(sample(N_mhi, ntest))
+  N_test = rbind(test_pel, test_nwhi, test_mhi)
+  
+  all = NULL
+  for(i in c(N_pel,N_nwhi,N_mhi)){
+    sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+    samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
+    all <-rbind(all, samp)
+    
+    }
+  
+  ctest<-droplevels(subset(all, group%in%N_test))
+  ctrain<-droplevels(subset(all, !(group%in%N_test)))
 
-OOBkit <- table(train$population, predict(cfit, OOB = TRUE, type = 'response')) 
-1-(sum(diag(OOBkit))/nrow(train)) 
+####Tune Settings####
+mtry_vals = 7 
+ntree_vals = seq(50,50,1) #from, to, by
+tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
+#tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
-cprediction <-predict(cfit, newdata=ctest, predict.all = F, type='response') 
-ctest$rightPred <- as.character(cprediction) == as.character(ctest$population) 
+#### Run Optimization Sequence ####
+## Initiate Cluster
 
-varimp(cfit, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
-conditional = FALSE, threshold = .2, ...))
- proc.time() - cptm
+cl = makeCluster(detectCores())
+registerDoParallel(cl, cores = detectCores())
+
+
+#### Formula ####
+# for the RF model with 'population' as the response and time-frequency measurements 
+
+## UNCORRELATED VARIABLES
+#cformPc <- as.formula(paste("population ~ ", paste(names(pcdata)[5:30],collapse="+")))
+
+## CORRELATED VARIABLES
+cformPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
+
+
+
+##The foreach function is the loop function for parallel processing. 
+##It uses %dopar% which partitions the loop among your cores, then combines each output using the .combine argument. 
+ptm <- proc.time()
+x = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
+    library(party)
+    do_cRF = cforest(cformPc, data=ctrain,  controls=cforest_control(mincriterion = 0, ntree=tune_settings$ntree[i], mtry = tune_settings$mtry[i], minsplit = 4L, minbucket = 2L))
+}
+    
+    OOBtemp <- table(ctrain$population, predict(do_cRF, OOB = TRUE, type = 'response'))
+    OOB <- 1-(sum(diag(OOBtemp))/nrow(ctrain)) 
+#print(do_cRF$err.rate[tune_settings$ntree[i],])
+}
+
+proc.time() - ptm
+#### Stop Cluster ####
+
+stopCluster(cl)
+
+## Combine settings and results ####
+
+tune_settings = cbind(tune_settings, x)
+
+
+## Optimal Settings: the settings combo
+## that has the lowest OOB rate
+
+tuned<-tune_settings[which.min(tune_settings$OOB),]
+tunedAll <- rbind(tunedAll, tuned)    
+  
+  
+  
+  
+cfit <- cforest(cformPc, data=ctrain,  controls=cforest_unbiased(ntree=2000, mtry = 7))
+
+#Requires partykit
+#cfit <- cforest(cformPc, data=ctrain, ntree=1500, mtry = 6, control=ctree_control(mincriterion = 0, minsplit = 4L, minbucket = 2L))
+
+OOBkit <- table(ctrain$population, predict(cfit, OOB = TRUE, type = 'response')) 
+OOB <- 1-(sum(diag(OOBkit))/nrow(ctrain)) 
+
+cprediction <-predict(cfit, newdata=ctest, type='response')
+ctest$rightPred <- as.character(cprediction) == as.character(ctest$population)
+
+cresults.temp <- table(ctest$population, cprediction)
+
+ 
+sink("cresultstemp.txt", append=T)
+cresults.temp
+sink()
+
+}
+
+cresults <- cresults + cresults.temp
+pOOB <- 1-(sum(diag(cresults))/nrow(ctest))
+
+ sink("cfit.txt", append=T)
+OOBkit
+OOB
+
+cresults
+pOOB
+
+sink() 
+proc.time() - cptm
+ 
+ 
+
+``` 
+ varIMP<-varimp(cfit, nperm = 1L, OOB = TRUE, risk = c("loglik", "misclassification"),
+conditional = FALSE, threshold = .2)
  
  
  
  
- 
- 
- 
- 
+ plot(cfit, main = NULL,
+    terminal_panel = node_terminal, tp_args = list(),
+    inner_panel = node_inner, ip_args = list(),
+    edge_panel = edge_simple, ep_args = list(),
+    drop_terminal = FALSE, tnex = 1,
+    newpage = TRUE, pop = TRUE)
  
  
  

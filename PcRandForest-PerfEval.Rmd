@@ -206,8 +206,8 @@ for(rep in 1:n_samps){
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 5:10 
-ntree_vals = seq(500,3000,100) #from, to, by
+mtry_vals = 5
+ntree_vals = seq(500,500,1) #from, to, by
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
