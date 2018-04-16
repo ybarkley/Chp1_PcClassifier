@@ -1,0 +1,144 @@
+
+
+```{r}
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\Pc_MasterListEdit-1005.csv')
+
+##Calculate Pearson's correlation coefficient for all variables. Remove variables -0.70 > r > 0.70.
+pcsub<-pcdata[,8:55]
+corrplot.mixed(cor(pcsub), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.70 | x < -0.70))]
+
+pcdata <- cbind(pcdata[, c(2:6)], pcsub)
+
+
+#All 
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
+NWHI  = c(14:19,21:24)   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
+MHI = c(26,28:33, 35, 36)        # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+w=50
+prop=0.5
+n_samps=1
+
+
+formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[6:30],collapse="+"))) #Use variables to classify to encounterall = NULL
+```
+
+
+```{r}
+## GIANT LOOP---BEWARE ####
+
+falsehope=c()
+
+for(rep in 1:n_samps){
+
+
+#From all of the encounters, sampling 50 whistles from each encounter (some have >50)
+enc_all = NULL
+for(i in c(PEL,NWHI,MHI)){
+  enc_sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+  enc_samp=enc_sub[sample(nrow(enc_sub), w),] #randomly samples w whistles from the 50 or more whistles
+  enc_all <-rbind(enc_all, enc_samp)
+  
+}
+
+enc_part <- createDataPartition(y=enc_all$id,p=prop,list=FALSE)
+enc_train <- enc_all[enc_part,]
+enc_test <- enc_all[-enc_part,]
+
+
+
+##############################
+## Set up a dataframe where each row is a specific 
+## combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
+##############################
+mtry_vals = 5:7 
+ntree_vals = seq(501,3001,250) #from, to, by
+tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
+
+#################################
+## Initiate Cluster
+#################################
+cl = makeCluster(detectCores())
+registerDoParallel(cl, cores = detectCores())
+
+############################################
+##Create the formula for the RF model with 'population' as the response and time-frequency measurements from uncorrelated data as the covariates
+############################################
+#formPc.new <- as.formula(paste("population ~ ", paste(names(pcnew)[7:36],collapse="+")))
+formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[6:30],collapse="+"))) #Use variables to classify to encounter
+
+#######################################
+##The foreach function is the loop function for parallel processing. 
+##It uses %dopar% which partitions the loop among your cores, then combines each output using the .combine argument. 
+
+x = foreach(i = 1:nrow(tune_settings2), .combine = rbind) %dopar% { 
+  library(randomForest)
+  do_RF2 = randomForest(formPc_enc, data = enc_train, test = enc_test, ntree = tune_settings2$ntree[i], mtry = tune_settings2$mtry[i])
+  print(do_RF2$err.rate[tune_settings2$ntree[i],])
+}
+
+#so, for each of the parameter combinations, i.e., rows of the tune_settings df, the RF is run using those 
+#settings (line 46) and the error rates for the 3 pop's and the oob are printed (line 47). 
+#when all the rows are finished, the results are combined using the rbind function into one matrix, stored as x.
+
+#NB: .combine can be anything, really, for example .combine = c for a vector, .combine = list for a list, etc.
+
+#################################
+## Stop Cluster
+#################################
+stopCluster(cl)
+
+########################################
+## Combine settings and results
+########################################
+tune_settings2 = cbind(tune_settings2, x)
+########################################
+## Optimal Settings: the settings combo
+## that has the lowest OOB rate
+#######################################
+tuned2<-tune_settings2[which.min(tune_settings2$OOB),]
+
+ 
+### RANDOM FOREST ####
+accuracies2 <- c()
+enc_pred.table=NULL
+# total=data.frame()
+# total2=data.frame()
+
+##Run Random Forest model using 'tuned' parameters for mtry and ntree
+enc_fit <- randomForest(formPc_enc, data=enc_train, ntree=tuned2[1,2], importance=TRUE, replace=T, mtry=tuned2[1,1], norm.votes=T, confusion=T, keep.inbag=T, proximity=T) 
+
+enc_prediction <-predict(enc_fit, newdata=enc_test, predict.all = F, type='response') #prediction for encounter of test data using RF model, 'fit'
+enc_prediction_vote <-predict(enc_fit, newdata=enc_test, predict.all = T, type='vote') #prediction for encounter of test data using RF model, 'fit'
+enc_test$rightPred <- enc_prediction == enc_test$id #shows T/F for individual whistles and whether they were classified correctly
+accuracy2 <- sum((enc_test$rightPred)/nrow(enc_test)) #sums all 'TRUE' and divides by total
+
+###RESULTS!!!##################################  
+enc_results <- table(enc_test$id, enc_prediction)    
+#enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations
+write.table(enc_results, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//EncounterClassifier_ConfMatrix2.csv", sep=",")
+            
+enc.whistles<-data.frame("group"=enc_test$id, "prediction"=enc_prediction, "whistle"=enc_test$whistle_count)
+
+false=nrow(subset(enc_test, enc_test$rightPred=='FALSE'))/nrow(enc_test)*100 #percentage of misclassified whistles
+falsehope <- c(falsehope, false)
+
+## OUTPUTS ####
+#   d.enc = as.data.frame(unique(enc_test$id))
+#   d.enc = as.data.frame(as.character(d.enc[27, ]))
+#   e.enc=c()
+#   e.enc=as.data.frame(rbind(true.pel.array))#, true.nwhi.array))
+#   e.enc=cbind(e.enc, d.enc)
+#   colnames(e.enc) = c("Classification", "EncounterID")
+#   
+# f.array=as.data.frame(cbind(prediction.array.vote$aggregate, prediction.array.vote$individual))
+# g.array=cbind(enc, "population"=array.test$population, "group"=array.test$group, whistle=array.test$whistle_count, "prediction"=array.test$rightPred, f.array)
+# 
+# output_VotesAll.array <- bind_rows(output_VotesAll.array, g.array)
+
+
+}
+```
