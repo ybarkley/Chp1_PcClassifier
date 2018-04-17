@@ -37,12 +37,30 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 90              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 1        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 prop = 0.5
 ```
 
 
 ```{r}
+
+
+
+
+
+results.enc = matrix(0, nrow = 13, ncol = 13)
+realP = c()
+fakeP = c()
+realM = c()
+fakeM = c()
+output_WhistleClass.enc =NULL
+output_EncounterClass.enc=NULL
+output_RawResults.enc=NULL
+output_TrainSet.encAll=NULL
+output_TestSet.encAll = NULL
+output_Votes.encAll=NULL
+tuned.encAll=NULL
+varIMPtotal.enc =NULL
 ## GIANT LOOP---BEWARE ####
 
 falsehope=c()
@@ -70,7 +88,7 @@ enc_test <- enc_all[-enc_part,]
 ## combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 ##############################
 mtry_vals = 5:7 
-ntree_vals = seq(501,3001,250) #from, to, by
+ntree_vals = seq(501,1001,250) #from, to, by
 tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
 #################################
@@ -114,29 +132,42 @@ tune_settings2 = cbind(tune_settings2, x)
 ## Optimal Settings: the settings combo
 ## that has the lowest OOB rate
 #######################################
-tuned2<-tune_settings2[which.min(tune_settings2$OOB),]
-
+tuned.enc<-tune_settings2[which.min(tune_settings2$OOB),]
+tuned.encAll <- rbind(tuned.encAll, tuned.enc)
  
 ### RANDOM FOREST ####
-accuracies2 <- c()
+accuracy.enc <- c()
 enc_pred.table=NULL
-# total=data.frame()
-# total2=data.frame()
+
 
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-enc_fit <- randomForest(formPc_enc, data=enc_train, ntree=tuned2[1,2], importance=TRUE, replace=T, mtry=tuned2[1,1], norm.votes=T, confusion=T, keep.inbag=T, proximity=T) 
+enc_fit <- randomForest(formPc_enc, data=enc_train, ntree=tuned.enc[1,2], importance=TRUE, replace=T, mtry=tuned.enc[1,1], norm.votes=T, confusion=T, keep.inbag=T, proximity=T) 
 
 enc_prediction <-predict(enc_fit, newdata=enc_test, predict.all = F, type='response') #prediction for encounter of test data using RF model, 'fit'
 enc_prediction_vote <-predict(enc_fit, newdata=enc_test, predict.all = T, type='vote') #prediction for encounter of test data using RF model, 'fit'
 enc_test$rightPred <- as.character(enc_prediction) == as.character(enc_test$EncounterID) #shows T/F for individual whistles and whether they were classified correctly
-accuracy2 <- sum((enc_test$rightPred)/nrow(enc_test)) #sums all 'TRUE' and divides by total
+accuracy.enc <- sum((enc_test$rightPred)/nrow(enc_test)) #sums all 'TRUE' and divides by total
 
 ###RESULTS!!!##################################  
-enc_results <- table(enc_test$EncounterID, enc_prediction)    
+enc_results.temp <- table(enc_test$EncounterID, enc_prediction)    
+
+
+# Important Variables
+  varIMPtemp.enc <- as.data.frame(importance(enc_fit))
+  varIMP.enc <- varIMPtemp.enc[order(varIMPtemp.enc$MeanDecreaseGini), , drop =F]
+  varIMPtotal.enc <- rbind(varIMPtotal.enc, "REP"=rep, varIMP.enc)
+
+
+results.enc <- results.enc + enc_results.temp  
+
+
+}
+```
+
 #enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations
 write.table(enc_results, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp1_PcClassifier-master\\EncounterClassifier_ConfMatrix.csv", sep=",")
             
-enc.whistles<-data.frame("group"=enc_test$id, "prediction"=enc_prediction, "whistle"=enc_test$whistle_count)
+enc.whistles<-data.frame("group"=enc_test$EncounterID, "prediction"=enc_prediction, "whistle"=enc_test$whistle_count)
 
 false=nrow(subset(enc_test, enc_test$rightPred=='FALSE'))/nrow(enc_test)*100 #percentage of misclassified whistles
 falsehope <- c(falsehope, false)
