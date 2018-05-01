@@ -92,7 +92,7 @@ freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.facto
         axis.title=element_text(size=12,face="bold"),
         legend.title = element_blank()) +
   scale_color_manual(values=color) 
-ggsave('Plot_FREQPOSSLOPE.pdf', width = 11, height = 8, units = "in")
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQPOSSLOPE.png', width = 11, height = 8, units = "in", type = "cairo-png")
 
 
 
@@ -117,13 +117,13 @@ freqspd<-ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(popul
  
   
 
-ggsave('Plot_freqquarter3.png', width = 11, height = 8, units = "in", type = "cairo-png")
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_freqspread.png', width = 11, height = 8, units = "in", type = "cairo-png")
 
 
 
 
 # Plot FREQSWEEPFLATPERCENT
-freqswp <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQSWEEPFLATPERCENT, col=as.factor(population))) +
+freq <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQQUARTER, col=as.factor(population))) +
   geom_boxplot() +
   theme_bw() +
   labs(x="Encounter", y="", 
@@ -140,7 +140,7 @@ freqswp <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQSWEEPFLATPERCENT, 
         legend.title = element_blank()) +
   guides(shape = guide_legend(override.aes = list(size=10)))+
   scale_color_manual(values=color)
-ggsave('Plot_FREQSWEEPFLAT.pdf', width = 11, height = 8, units = "in")
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQQUARTER.png', width = 11, height = 8, units = "in", type = "cairo-png")
 #ggsave('Plot_FREQSWEEPFLAT.png', device='pdf', width = 11, height = 8, units = "in")
 ```
 

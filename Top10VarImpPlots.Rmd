@@ -1,0 +1,98 @@
+---
+title: "Importance Variable Plots"
+output: html_notebook
+---
+
+This script plots the top 10 important variables factored by population and encounter. It is intended to explore the differences in values between the new whistles (sans HARP) and old whistles.
+
+
+```{r}
+library(ggplot2)
+library(reshape2)
+#shades of gray###
+color <- c('#35bb7c', 'black', '#947d51','#8576aa')
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+
+#subset for pelagic and mhi
+pcdata <- subset(pcdata, pcdata$population != "nwhi")
+
+
+#subset for top 10 variables
+pcdata_sub <- pcdata[, c(3,13,20,22,23,30)]
+#BY ENCOUNTER
+#Turn data into long format with melt()
+data_melt = melt(pcdata_sub, id.vars ="EncounterID", measure.vars = c("FREQMEAN", "FREQQUARTER1", "FREQSPREAD", "FREQQUARTER3", "FREQPOSSLOPEMEAN" ))
+
+p <- ggplot(data_melt, aes(EncounterID, value)) +   
+  geom_boxplot(aes(colour=variable)) +
+  theme(plot.background = element_rect(fill = "white"))
+        
+
+
+#Plot Mean positive slope / duration
+freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="Frequency (Hz)", 
+       title="Mean Positive Slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  scale_color_manual(values=color) 
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQPOSSLOPE.png', width = 11, height = 8, units = "in", type = "cairo-png")
+
+
+
+
+# Plot third-quarter frequency / duration
+freqspd<-ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="Frequency (Hz)")+ 
+       #title="Third Quarter Frequency", 
+       #subtitle="Frequency at three-quarters of the duration") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  scale_color_manual(values=color) 
+ 
+  
+
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_freqspread.png', width = 11, height = 8, units = "in", type = "cairo-png")
+
+
+
+
+# Plot FREQSWEEPFLATPERCENT
+freq <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQQUARTER, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="", 
+       title="Percent Flat",
+       subtitle="Percent of the whistle with zero slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  guides(shape = guide_legend(override.aes = list(size=10)))+
+  scale_color_manual(values=color)
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQQUARTER.png', width = 11, height = 8, units = "in", type = "cairo-png")
+#ggsave('Plot_FREQSWEEPFLAT.png', device='pdf', width = 11, height = 8, units = "in")
+```

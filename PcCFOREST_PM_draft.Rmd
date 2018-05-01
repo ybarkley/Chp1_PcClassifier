@@ -3,12 +3,30 @@ title: "R Notebook"
 output: html_notebook
 ---
 
+```{r warning=FALSE, message=FALSE}
+library(sqldf)
+library(randomForest)
+library(partykit)
+library(caret)
+library(corrplot)
+library(parallel); 
+library(doParallel);
+library(gtools)
+library(devtools) 
+library(dplyr)
+library(data.table)
+library(ggplot2)
+
+
+```
+
+
 #Set up encounters for RF
 ```{r}
 
 pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 
-pcdata.pm <- droplevels(filter(pcdata, population != "nwhi"))
+pcdata.pm <-droplevels(filter(pcdata.pm, population != "nwhi"))
 
 #pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
 
@@ -112,8 +130,21 @@ for(rep in 1:n_samps){
 # ## CORRELATED VARIABLES
 cformPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
 # 
-# 
-# 
+#Requires partykit
+cfit.pm <- cforest(cformPc, data=ctrain.pm, ntree=1500, mtry = 6, control=ctree_control(mincriterion = 0, minsplit = 4L, minbucket = 2L))
+
+OOBkit.pm <- table(ctrain.pm$population, predict(cfit.pm, OOB = TRUE, type = 'response')) 
+OOB.pm <- 1-(sum(diag(OOBkit.pm))/nrow(ctrain.pm)) 
+
+cprediction.pm <-predict(cfit.pm, newdata=ctest.pm, type='response')
+ctest.pm$rightPred <- as.character(cprediction.pm) == as.character(ctest.pm$population)
+
+ #sums all 'TRUE' and divides by total
+   caccuracy.pm <- sum((ctest.pm$rightPred)/nrow(ctest.pm)) 
+  
+  ####RESULTS!!!#####  
+  cresults.pmtemp <- table(ctest.pm$population, cprediction.pm)
+
 # ##The foreach function is the loop function for parallel processing. 
 # ##It uses %dopar% which partitions the loop among your cores, then combines each output using the .combine argument. 
 # 
@@ -149,7 +180,7 @@ cformPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collap
     return(grd)
 }
   cfit.pm <- train(cformPc,
-                   data = pcdata.pm,
+                   data = pcdata.pm, 
                    method = 'cforest',
                    controls = cforest_unbiased(ntree = 10))
   
@@ -170,6 +201,14 @@ cformPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collap
   ####RESULTS!!!#####  
   cresults.pmtemp <- table(ctest.pm$population, cprediction.pm)  # conf matrix of individual whistle classification
   
+ctest.pmID <-unique(ctest.pm$EncounterID)
+sink("cresults.pmtemp.txt", append=T)
+ctest.pmID
+caccuracy.pm
+cresults.pmtemp
+sink()
+
+}   
   #calculate % accuracies of diagonal by population from confusion matrix of percentages
 pel.pel<-round((cresults.pmtemp[1,1])/(cresults.pmtemp[1,1]+cresults.pmtemp[1,2])*100,2) #pelagic
 mhi.mhi<-round((cresults.pmtemp[2,2])/(cresults.pmtemp[2,1]+cresults.pmtemp[2,2])*100,2) #mhi 

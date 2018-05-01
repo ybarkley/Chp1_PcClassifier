@@ -23,7 +23,8 @@ library(ggplot2)
 ```
 
 ```{r}
-pcdata <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp1_PcClassifier-master\\BIG ROCCA FILE.csv')
+#pcdata <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp1_PcClassifier-master\\BIG ROCCA FILE.csv')
+pcdata <-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 pcdata <- droplevels(filter(pcdata, population != "nwhi"))
 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -37,7 +38,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 90              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2        #Zack: number of times you want to resample from your dataset
+n_samps = 10        #Zack: number of times you want to resample from your dataset
 prop = 0.5
 ```
 
@@ -46,7 +47,7 @@ prop = 0.5
 
 
 
-
+ptm <- proc.time()
 
 results.enc = matrix(0, nrow = 13, ncol = 13)
 realP = c()
@@ -88,7 +89,7 @@ enc_test <- enc_all[-enc_part,]
 ## combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 ##############################
 mtry_vals = 5:7 
-ntree_vals = seq(501,1001,250) #from, to, by
+ntree_vals = seq(501,3001,250) #from, to, by
 tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
 #################################
@@ -162,10 +163,13 @@ results.enc <- results.enc + enc_results.temp
 
 
 }
+
+proc.time()-ptm
 ```
 
 #enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations
-write.table(enc_results, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp1_PcClassifier-master\\EncounterClassifier_ConfMatrix.csv", sep=",")
+
+write.table(results.enc, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/Encounters.csv', sep=",", append=TRUE)
             
 enc.whistles<-data.frame("group"=enc_test$EncounterID, "prediction"=enc_prediction, "whistle"=enc_test$whistle_count)
 
