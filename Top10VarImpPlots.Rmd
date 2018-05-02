@@ -4,95 +4,145 @@ output: html_notebook
 ---
 
 This script plots the top 10 important variables factored by population and encounter. It is intended to explore the differences in values between the new whistles (sans HARP) and old whistles.
-
-
-```{r}
+```{r warning=FALSE, message=FALSE}
 library(ggplot2)
 library(reshape2)
+```
+
+#New Whistle Plots
+```{r}
+
 #shades of gray###
-color <- c('#35bb7c', 'black', '#947d51','#8576aa')
+#color <- c('#35bb7c', 'black', '#947d51','#8576aa')
+
+#new data
 pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 
 #subset for pelagic and mhi
 pcdata <- subset(pcdata, pcdata$population != "nwhi")
 
+#subset important variables
+pcdata_sub <- pcdata[, c(1,3,9,13,14,20,22,23,30,32,41)]
 
-#subset for top 10 variables
-pcdata_sub <- pcdata[, c(3,13,20,22,23,30)]
-#BY ENCOUNTER
 #Turn data into long format with melt()
-data_melt = melt(pcdata_sub, id.vars ="EncounterID", measure.vars = c("FREQMEAN", "FREQQUARTER1", "FREQSPREAD", "FREQQUARTER3", "FREQPOSSLOPEMEAN" ))
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("DURATION", "FREQMEAN", "FREQSTDDEV", "FREQQUARTER1","FREQQUARTER3", "FREQSPREAD", "FREQPOSSLOPEMEAN", "FREQSLOPERATIO", "NUMSWEEPSUPFLAT" ))
+#splitting up the EncounterID labels to make them fit better on the plots
+data_melt$Encounter <-as.character(data_melt$EncounterID)
+data_meltENC <- as.data.frame(str_split_fixed(data_melt$Encounter, "Pc", 2))
+data_melt <- cbind(data_melt, data_meltENC)
+data_melt <- data_melt[, c(1,7,3,4)]
+colnames(data_melt)[2] <- "EncounterID"
 
-p <- ggplot(data_melt, aes(EncounterID, value)) +   
-  geom_boxplot(aes(colour=variable)) +
-  theme(plot.background = element_rect(fill = "white"))
-        
-
-
-#Plot Mean positive slope / duration
-freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.factor(population))) +
-  geom_boxplot() +
-  theme_bw() +
-  labs(x="Encounter", y="Frequency (Hz)", 
-       title="Mean Positive Slope") +
-  theme(panel.background = element_rect(fill = "white"),
-        plot.background = element_rect(fill = "white"),
-        plot.title = element_text(size=20, hjust=0.5, face='bold'),
-        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
-        panel.grid.major = element_blank(),
-        axis.text.x = element_text(size=7),
-        axis.text.y = element_text(size=9),
-        axis.title=element_text(size=12,face="bold"),
-        legend.title = element_blank()) +
-  scale_color_manual(values=color) 
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQPOSSLOPE.png', width = 11, height = 8, units = "in", type = "cairo-png")
+#BY ENCOUNTER
+plot_enc<- ggplot(data_melt, aes(y=value, x=EncounterID)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot(aes(colour=population)) +
+  labs(title="New Whistle Data by Encounter", subtitle="(no HARP data, incremental random sampling)") + 
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=5),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+          guides(fill=guide_legend(title="Population"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Encounters_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
 
+      
+#BY POPULATION
+  #boxplot
+plot_pop<- ggplot(data_melt, aes(y=value, x=population)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot(aes(colour=population)) +
+ labs(title="New Whistle Data by Population", subtitle="(no HARP data, incremental random sampling)") + #(includes HARP data, mhi31-34)
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Population_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")
+
+  #density plot
+plot_popDens<- ggplot(data_melt, aes(x=value, fill=population)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_density(alpha=0.3) + #alpha controls shading
+labs(title="New Whistle Data by Encounter", subtitle="(no HARP data, incremental random sampling)") +
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+          guides(fill=guide_legend(title="Population"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_DensityPlot_Population_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")
+
+```
 
 
-# Plot third-quarter frequency / duration
-freqspd<-ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(population))) +
-  geom_boxplot() +
-  theme_bw() +
-  labs(x="Encounter", y="Frequency (Hz)")+ 
-       #title="Third Quarter Frequency", 
-       #subtitle="Frequency at three-quarters of the duration") +
-  theme(panel.background = element_rect(fill = "white"),
-        plot.background = element_rect(fill = "white"),
-        plot.title = element_text(size=20, hjust=0.5, face='bold'),
-        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
-        panel.grid.major = element_blank(),
-        axis.text.x = element_text(size=7),
-        axis.text.y = element_text(size=9),
-        axis.title=element_text(size=12,face="bold"),
-        legend.title = element_blank()) +
-  scale_color_manual(values=color) 
- 
-  
+#Plots with Old Whistle data
+```{r warning=FALSE, message=FALSE}
+#old data
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
 
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_freqspread.png', width = 11, height = 8, units = "in", type = "cairo-png")
+#subset for pelagic and mhi
+pcdata <- subset(pcdata, pcdata$population != "nwhi")
+
+#with OLD
+# pcdata_sub <- pcdata[, c(1,3,9,13,14,20,22,23,30,32,41)]
+# 
+# #Turn data into long format with melt()
+# #Same as new
+# data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("DURATION", "FREQMEAN", "FREQSTDDEV", "FREQQUARTER1","FREQQUARTER3", "FREQSPREAD", "FREQPOSSLOPEMEAN", "FREQSLOPERATIO", "NUMSWEEPSUPFLAT" ))
+
+# #with OLD
+pcdata_sub <- pcdata[, c(1,3,30,31,47)]
+#Different than new
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c( "FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN", "FREQSWEEPFLATPERCENT" ))
 
 
+#BY ENCOUNTER
+plot_enc<- ggplot(data_melt, aes(y=value, x=EncounterID)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot(aes(colour=population)) +
+  labs(title="New Whistle Data by Encounter - Top 3", subtitle="(no HARP data, incremental random sampling)") + #(no HARP data, incremental random sampling)
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=5),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+          guides(fill=guide_legend(title="Population"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Encounters_noHARP_top3.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
 
-# Plot FREQSWEEPFLATPERCENT
-freq <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQQUARTER, col=as.factor(population))) +
-  geom_boxplot() +
-  theme_bw() +
-  labs(x="Encounter", y="", 
-       title="Percent Flat",
-       subtitle="Percent of the whistle with zero slope") +
-  theme(panel.background = element_rect(fill = "white"),
-        plot.background = element_rect(fill = "white"),
-        plot.title = element_text(size=20, hjust=0.5, face='bold'),
-        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
-        panel.grid.major = element_blank(),
-        axis.text.x = element_text(size=7),
-        axis.text.y = element_text(size=9),
-        axis.title=element_text(size=12,face="bold"),
-        legend.title = element_blank()) +
-  guides(shape = guide_legend(override.aes = list(size=10)))+
-  scale_color_manual(values=color)
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQQUARTER.png', width = 11, height = 8, units = "in", type = "cairo-png")
-#ggsave('Plot_FREQSWEEPFLAT.png', device='pdf', width = 11, height = 8, units = "in")
+      
+#BY POPULATION
+  #boxplot
+plot_pop<- ggplot(data_melt, aes(y=value, x=population)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot(aes(colour=population)) +
+ labs(title="New Whistle Data by Population - Top 3", subtitle="(no HARP data, incremental random sampling)") + #(includes HARP data, mhi31-34)
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Population_noHARP_top3.png', width = 12, height = 8, units = "in", type = "cairo-png")
+
+  #density plot
+plot_popDens<- ggplot(data_melt, aes(x=value, fill=population)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_density(alpha=0.3) +
+labs(title="New Whistle Data by Population", subtitle="(no HARP data, incremental random sampling)") +
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8),
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+          guides(fill=guide_legend(title="Population"))
+#saves with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_DensityPlot_Population_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")
+
 ```
