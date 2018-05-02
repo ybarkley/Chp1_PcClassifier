@@ -107,22 +107,24 @@ pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 #Set up encounters for RF using new or old whistle data
 ```{r}
 #new whistles
-pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 
 #old whistles
-#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
+pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
+
+pcdata.pm <- droplevels(subset(pcdata.pm, population == 'pel' | population == 'mhi'))
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
-NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = c(26:30)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+#NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
+MHI = c(26:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 
-nrep  = 4           # multiplier for total number of groups
+nrep  = 8           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
-w = 90              # Number of whistles randomly pulled from each group 
+w = 45              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 5         #number of times you want to resample from your dataset
 
@@ -393,18 +395,21 @@ sdFakeP <- sd(fakeP)
 sdRealM <- sd(realM)
 sdFakeM <- sd(fakeM)
 
+date='20180501 old'
 #Combine means and std errors into matrix
-sink("ConfMatrix_means_20180426.txt", append=T)
+sink("ConfMatrix_means_20180501.txt", append=T)
 PMmeans <- rbind("PEL"= c(meanRealP, meanFakeP), "MHI"=c(meanRealM, meanFakeM))
 colnames(PMmeans) <- c("PEL", "MHI")
+date
 w
 n_samps
 PMmeans
 sink()
 
-sink("ConfMatrix_stddevs_20180426.txt", append=T)
+sink("ConfMatrix_stddevs_20180501.txt", append=T)
 PMsds <- rbind("PEL"= c(sdRealP, sdFakeP), "MHI"=c(sdRealM, sdFakeM))
 colnames(PMsds) <- c("PEL", "MHI")
+date
 w
 n_samps
 PMsds
@@ -416,20 +421,35 @@ proc.time() - ptm
 ```
 
 
-###Write outputs to file
+###Write NEW WHISTLE DATA outputs to file
+```{r}
+write.table(output_EncounterClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_newPvM.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_newPvM.csv", append = T, row.names = F, col.names=T, sep = ",")
+
+#write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_newPvM.csv", append = T, col.names=F, sep = ",")
+
+write.table(output_TrainSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_newPvM.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_TestSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestResults_newPvM.csv", append = T, col.names=T, sep = ",")
+
+write.table(varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_ImportantVars_newPvM.csv", append = T, col.names=T, sep = ",")
+```
+###Write OLD WHISTLE DATA outputs to file
 ```{r}
 write.table(output_EncounterClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_oldPvM.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_oldPvM.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_oldPvM.csv", append = T, col.names=F, sep = ",")
+#write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_newPvM.csv", append = T, col.names=F, sep = ",")
 
 write.table(output_TrainSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_oldPvM.csv", append = T, col.names=T, sep = ",")
 
 write.table(output_TestSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestResults_oldPvM.csv", append = T, col.names=T, sep = ",")
 
-write.table(varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalImportantVars_oldPvM.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_ImportantVars_oldPvM.csv", append = T, col.names=T, sep = ",")
 ```
+
 
 ##Testing HARP data with new whistles
 ```{r warning=FALSE, message=FALSE}
