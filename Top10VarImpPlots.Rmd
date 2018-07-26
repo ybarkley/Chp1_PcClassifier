@@ -7,6 +7,7 @@ This script plots the top 10 important variables factored by population and enco
 ```{r warning=FALSE, message=FALSE}
 library(ggplot2)
 library(reshape2)
+library(stringr)
 ```
 
 #New Whistle Plots
@@ -16,37 +17,69 @@ library(reshape2)
 #color <- c('#35bb7c', 'black', '#947d51','#8576aa')
 
 #new data
-pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\BigRoccaFile_PM_TowedAll.csv')
+
+pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/results/20180717/pcdata.pm_20180717.csv')
+
+
+#decimation test
+pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/decimation_test/PcMHI31_32_RoccaContourStats_RAWDEC_edited.csv')
+
 
 #subset for pelagic and mhi
 pcdata <- subset(pcdata, pcdata$population != "nwhi")
 
 #subset important variables
-pcdata_sub <- pcdata[, c(1,3,9,13,14,20,22,23,30,32,41)]
+pcdata_sub <- pcdata.pm[, c(1,3,7,8,14,15,31)]
+
+
+#decimation test
+pcdata_sub <- pcdata[, c(1,2,29,30)]
+
 
 #Turn data into long format with melt()
-data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("DURATION", "FREQMEAN", "FREQSTDDEV", "FREQQUARTER1","FREQQUARTER3", "FREQSPREAD", "FREQPOSSLOPEMEAN", "FREQSLOPERATIO", "NUMSWEEPSUPFLAT" ))
-#splitting up the EncounterID labels to make them fit better on the plots
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("DURATION", "FREQQUARTER3","FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN", "FREQBEG" ))
+
+#decimation test
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN"))
+
+#splitting up the EncounterID labels (PcPel1, PcPel2 etc) to make them Pel1, Pel2, to fit better on the plot axis 
 data_melt$Encounter <-as.character(data_melt$EncounterID)
 data_meltENC <- as.data.frame(str_split_fixed(data_melt$Encounter, "Pc", 2))
 data_melt <- cbind(data_melt, data_meltENC)
-data_melt <- data_melt[, c(1,7,3,4)]
-colnames(data_melt)[2] <- "EncounterID"
+data_melt_sub <- data_melt[, c(1,7,3,4)]  #reorder columns with new encounter name col
+colnames(data_melt_sub)[2] <- "EncounterID" #rename new encounter name col
 
 #BY ENCOUNTER
-plot_enc<- ggplot(data_melt, aes(y=value, x=EncounterID)) +  
+plot_enc<- ggplot(data_melt_sub, aes(y=value, x=EncounterID)) +  
   facet_wrap(~variable, scales = "free") +
   geom_boxplot(aes(colour=population)) +
-  labs(title="New Whistle Data by Encounter", subtitle="(no HARP data, incremental random sampling)") + 
+  labs(title="Important ROCCA Variables by Encounter", subtitle="(Array Data Only)") + 
   theme(plot.background = element_rect(fill = "white"),
-        axis.text.x=element_text(size=5),
-        axis.text.y=element_text(size=8),
+        axis.text.x=element_text(size=6), #5 for all encounters
+        axis.text.y=element_text(size=10), #8 for all encounters
         plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
         plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
           guides(fill=guide_legend(title="Population"))
-#saves with better resolution
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Encounters_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+#saves plot with better resolution
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\Pc_Boxplot_Encounters_array_20180717.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
+
+
+
+#For decimation test
+plot_enc<- ggplot(data_melt_sub, aes(y=value, x=EncounterID)) +  
+  facet_wrap(~variable, scales = "free") +
+  geom_boxplot(aes(colour=population)) +
+  labs(title="Comparing slope values with different sampling freqs for PcMHI31 and PcMHI32", subtitle="(raw=500kHz, dec=192kHz)") + 
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=10), 
+        axis.text.y=element_text(size=10),
+        plot.title=element_text(size=20, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+          guides(fill=guide_legend(title="Population"))
+#save for decimation test plot
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/decimation_test/PcMHI31_32_Boxplot_decimation_20180702_1.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
       
 #BY POPULATION

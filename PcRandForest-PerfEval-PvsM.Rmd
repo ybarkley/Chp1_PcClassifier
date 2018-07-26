@@ -33,8 +33,11 @@ library(tree)
 
 If using the raw data file, run this section to modify the columns
 ```{r}
+#6/28/18
 #Load ROCCA data (already replaced 'NA' and '999' with '0')
-ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE raw.csv')
+ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PM_TowedAll_RAW_20180717.csv')
+
+#ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/decimation_test/PcMHI31_32_RoccaContourStats_RAWDEC.csv')
 
 #Read old dataset
 #pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\Pc_MasterListEdit-1016labs.csv')
@@ -42,7 +45,7 @@ ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 10
 #pcdata<-droplevels(subset(pcdata, Recorder != 'PMRF'))
 
 
-#Add species names to last columns and save
+#Add species names to last columns and save (used this for BIG ROCCA with all recorders)
 colnames(ROCCAdata)[93] <- "Dc_Dd"
 colnames(ROCCAdata)[94] <- "Gm"
 colnames(ROCCAdata)[95] <- "Pc"
@@ -52,55 +55,113 @@ colnames(ROCCAdata)[98] <- "Sc"
 colnames(ROCCAdata)[99] <- "Sl"
 colnames(ROCCAdata)[100] <- "Tt"
 
+#Used this routine for towed only data set
+# colnames(ROCCAdata)[92]
+# colnames(ROCCAdata)[93]
+# colnames(ROCCAdata)[94]
+# colnames(ROCCAdata)[95]
+# colnames(ROCCAdata)[97] <- "Dc_Dd"
+# colnames(ROCCAdata)[98] <- "Gm"
+# colnames(ROCCAdata)[99] <- "Pc"
+# colnames(ROCCAdata)[100] <- "Sa"
+# colnames(ROCCAdata)[101]<- "Sb"
+# colnames(ROCCAdata)[102]<- "Sc"
+# colnames(ROCCAdata)[103]<- "Sl"
+# colnames(ROCCAdata)[104]<- "Tt"
+
+
 #Reexamining whistles with outlying values of slope means
 # test<- filter(ROCCAdata, FREQPOSSLOPEMEAN  > 90000)
 # test2<- filter(ROCCAdata, FREQNEGSLOPEMEAN <  -90000)
 
 #Remove unnecessary columns
 
-pcdata <- ROCCAdata[, -c(1:3, 5:7, 11:13, 21, 22, 34:37, 68:92, 101)]
+pcdata <- ROCCAdata[, -c(1:7, 11:13, 21, 22, 34:37, 68:92, 101)] #for towed only
+
+#for decimation test
+#pcdata <- ROCCAdata[, -c(1:7, 11:13, 15:18, 25, 26, 38:41, 73:96, 105)]
 pcdata %>% mutate_if(is.factor, as.character) -> pcdata
-pcdata %>% mutate_if(is.character, as.factor) -> pcdata
+#not sure why I included the opposite code below...
+#pcdata %>% mutate_if(is.character, as.factor) -> pcdata
 
 
 #i <- sapply(pcdata, is.factor)
 #pcdata[i] <- lapply(pcdata[i], as.character)
-
+###Added group column manually
 ###Add Population column and reorder
 pcdata$population <-NA
-levels(pcdata$population) <- c(levels(pcdata$population), "pel", "mhi", "nwhi")
-pcdata[pcdata$group %in% c(26:30), "population"] <- "mhi"
-pcdata[pcdata$group %in% c(14:17), "population"] <- "nwhi"
+levels(pcdata$population) <- c(levels(pcdata$population), "pel", "mhi") #, "nwhi")
+pcdata[pcdata$group %in% c(31:34), "population"] <- "mhi"
+#pcdata[pcdata$group %in% c(14:17), "population"] <- "nwhi"
 pcdata[pcdata$group %in% c(1:8), "population"] <- "pel"
 pcdata$population <- as.factor(pcdata$population)
-pcdata<- pcdata[, c(61, 1:60)]
+pcdata.pm<- pcdata[, c(60, 1:59)]
 
-pcdata.pm <- droplevels(subset(pcdata, population == 'pel' | population == 'mhi'))
+#Change column namec
+colnames(pcdata.pm)[2] <- "EncounterID"
 
-#Removing MHI29 (cluster 4 enc)
-#pcdata.pm <- subset(pcdata.pm, group != 29)
+#save file
+write.csv(pcdata.pm, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PM_TowedAll_EDIT_20180717.csv', row.names=F)
 
-# Id_count <- pcdata[, c(1,3)] #Check it out
-
-#Just looking at things
-# pel6 <- filter(pcdata, EncounterID == 'PcPEL6')
-# length(pcdata$EncounterID[which(pcdata$EncounterID == 'PcNWHI17')])
-# pcNA <- pcdata[which(pcdata == 'NA')]
 ```
 
 Correlation Stuff
 Will remove correlated variables based on the r value.
 ```{r}
+##Correlation?#### 
+# Including correlated variables would mostly impact the important variables
 ##Calculate Pearson's correlation coefficient for all variables. Remove variables -0.70 > r > 0.70.
-pcsub<-pdata.pm[,7:53]
+pcsub<-pcdata.pm[,6:52]
+
+pcsub<-pc_HarpFostex[,7:54]
+
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
 tmp[upper.tri(tmp)] <- 0
 diag(tmp) <- 0
-pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
-  pdata.pm <- cbind(pdata.pm[, c(1:4)], pcsub)
-  corrplot.mixed(cor(pdata.pm[,5:30]), upper="circle", lower="number") # for a visual representation of the correlation
+#remove FreqCOFM
+pcsubcor <-pcsubcor[, -6]
+#Adding beginning freq, range, freqquarter3. See Correlation_20180717.xlsx for more details. 
+pcsubcor <-cbind(pcsubcor, pcdata.pm[, c(9,11)]) #add in FreqBeg & Range
+pcsubcor <-cbind(pcsubcor, pc_HarpFostex[, c(10,12)]) #add in FreqBeg & Range
+tmp_new <- cor(pcsubcor)
+tmp_new[upper.tri(tmp_new)] <- 0
+diag(tmp_new) <- 0
+corrPlot<-corrplot.mixed(cor(pcsubcor), upper="circle", lower="number") # for a visual representation of the correlation
+write.csv(tmp_new, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results/20180717/Correlation_2_20180717.csv', row.names=F)  
+
+
+#Adding first 5 cols plus a few freq variables that were correlated and removed altogether. 
+  pcdata.pm <- cbind(pcdata.pm[, c(1:5)], pcsubcor)
+  pc_HarpFostex <- cbind(pc_HarpFostex[, c(1:5)], pcsubcor)
+
+ write.csv(pc_HarpFostex, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results/20180720/pcdata.HarpFostex_201807123.csv', row.names=F)   
+  
+
+
+#Example Correlation Code
+# https://stats.stackexchange.com/questions/50537/should-one-remove-highly-correlated-variables-before-doing-pca
+n.cases <- 240               # Number of points.
+n.vars <- 4                  # Number of mutually correlated variables.
+set.seed(26)                 # Make these results reproducible.
+eps <- rnorm(n.vars, 0, 1/4) # Make "1/4" smaller to *increase* the correlations.
+x <- matrix(rnorm(n.cases * (n.vars+2)), nrow=n.cases)
+beta <- rbind(c(1,rep(0, n.vars)), c(0,rep(1, n.vars)), cbind(rep(0,n.vars), diag(eps)))
+y <- x%*%beta                # The variables.
+cor(y)                       # Verify their correlations are as intended.
+plot(data.frame(y))          # Show the scatterplot matrix.
+
+# Perform PCA on the first 2, 3, 4, ..., n.vars+1 variables.
+p <- lapply(2:dim(beta)[2], function(k) prcomp(y[, 1:k], scale=TRUE))
+
+# Print summaries and display plots.
+tmp <- lapply(p, summary)
+par(mfrow=c(2,2))
+tmp <- lapply(p, plot)
+
+
 ```
 
 
@@ -110,23 +171,29 @@ pcsub <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 #pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 
 #old whistles
-pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
+#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
+#pcdata.pm <- droplevels(subset(pcdata.pm, population == 'pel' | population == 'mhi'))
 
-pcdata.pm <- droplevels(subset(pcdata.pm, population == 'pel' | population == 'mhi'))
+
+#all whistles for pel and mhi only
+pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/results/20180717/pcdata.pm_uncorrelated_20180717.csv')
+
+#try using only top 5 important variables
+pcdata.pm <- pcdata.pm[, c(1:6, 8, 12:15)]
 
 # Need even number of encounters for each population represented in the training data. 
-PEL = 1:8                # designated groupID's assigned for each pelagic group 
+PEL = 1:7                # designated groupID's assigned for each pelagic group 
 #NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = c(26:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+MHI = c(31:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 
-nrep  = 8           # multiplier for total number of groups
+nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
-w = 45              # Number of whistles randomly pulled from each group 
+w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 5         #number of times you want to resample from your dataset
+n_samps = 100         #number of times you want to resample from your dataset
 
 
 ```
@@ -139,7 +206,7 @@ Meat of the Analysis
 ptm<-proc.time() 
 
 
-#### Start ####
+#### Start Main Analysis ####
 results.pm = matrix(0, nrow = 2, ncol = 2)
 realP = c()
 fakeP = c()
@@ -153,8 +220,8 @@ output_TestSet.pmAll = NULL
 output_Votes.pmAll=NULL
 tuned.pmAll=NULL
 output_varIMPtotal.pm = NULL
-
-
+fit_error_rate = c()
+accuracies.pm = c()
 #fit.pm <- vector("list", n_samps)
 #conf.mat.pm = matrix(0, nrow = 2, ncol = 2)
 # names.test=NULL
@@ -177,7 +244,7 @@ for(rep in 1:n_samps){
   #Randomly sample 1 group out of the selected groups for each population to be included in the test dataset later
   test_pel= as.integer(sample(N_pel, ntest))
   test_mhi= as.integer(sample(N_mhi, ntest))
-  #test_nwhi= as.integer(sample(N_nwhi, ntest))
+
   
   #Combines test groups into single vector
   N_test = rbind(test_pel, test_mhi)
@@ -192,24 +259,16 @@ for(rep in 1:n_samps){
   
   test.pm<-droplevels(subset(all, group%in%N_test ))
   train.pm<-droplevels(subset(all, !(group%in%N_test)))
-  #print(unique(train$EncounterID))
-  #print(unique(test$EncounterID))
-  
-  # testp <- subset(test, test$population == 'pelagic')
-  # testn <- subset(test, test$population == 'nwhi')
 
-# ADDING } to test making the training and test data
-#}
-  
-  
-#ptm<-proc.time() 
-
+#test.pm <- subset(pcdata.pm, pcdata.pm$group == 8)
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 5:10 
+mtry_vals = 5:10
 ntree_vals = seq(501,3001,500) #from, to, by
-#node_vals=1:3
+# #node_vals=1:3
+
+
 
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)#, nodesize = node_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
@@ -225,10 +284,10 @@ registerDoParallel(cl, cores = detectCores())
 # for the RF model with 'population' as the response and time-frequency measurements 
 
 ## UNCORRELATED VARIABLES
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:11],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
+#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
@@ -267,6 +326,10 @@ tuned.pmAll <- rbind(tuned.pmAll, tuned.pm)
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
   fit.pm <- randomForest(formPc, data=train.pm, ntree=tuned.pm[1,2], importance=TRUE, replace=T, mtry=tuned.pm[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
+#Save mean error rate for each model (added 7/20/18)
+fit_error_rate = c(fit_error_rate, fit.pm$err.rate)
+
+
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
   prediction.pm <-predict(fit.pm, newdata=test.pm, predict.all = F, type='response', nodes = T) 
   prediction.vote <-predict(fit.pm, newdata=test.pm, predict.all = T, type='vote')
@@ -276,7 +339,7 @@ tuned.pmAll <- rbind(tuned.pmAll, tuned.pm)
   
    #sums all 'TRUE' and divides by total
    accuracy.pm <- sum((test.pm$rightPred)/nrow(test.pm)) 
-  
+   accuracies.pm <- c(accuracies.pm, accuracy.pm)
   ####RESULTS!!!#####  
   results.pmtemp <- table(test.pm$population, prediction.pm)  # conf matrix of individual whistle counts
   
@@ -288,15 +351,6 @@ mhi.mhi<-round((results.pmtemp[2,2])/(results.pmtemp[2,1]+results.pmtemp[2,2])*1
 pel.mhi<-round((results.pmtemp[1,2])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2)
 mhi.pel<-round((results.pmtemp[2,1])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) 
   
-
-#Calculate means and standard dev for EACH ITERATION of confusion matrix
-#For a single iteration, stores separate cells of results for calculating mean and standard error
-#YOU NEED THIS STEP 4/26/18, TRUST ME!
-realP <- c(realP,results.pmtemp[1,1])
-fakeP <- c(fakeP,results.pmtemp[1,2])
-realM <- c(realM,results.pmtemp[2,2])
-fakeM <- c(fakeM,results.pmtemp[2,1])
-
 
 #Consolidate back into confusion matrix
 pel.row<-c(pel.pel, pel.mhi)
@@ -325,11 +379,18 @@ colnames(e.pm) = c("EncounterClass", "% Correct") #, "EncounterID")
 #Summed results confusion matrix after each iteration
 results.pm = results.pm + results.pmtemp 
 
-
+#For calculating means and standard dev for EACH ITERATION of confusion matrix
+#For a single iteration, stores separate cells of class results for calculating mean and standard error
+#YOU NEED THIS STEP 4/26/18, TRUST ME!
+realP <- c(realP,results.pmtemp[1,1])
+fakeP <- c(fakeP,results.pmtemp[1,2])
+realM <- c(realM,results.pmtemp[2,2])
+fakeM <- c(fakeM,results.pmtemp[2,1])
         
 #### OUTPUTS ####
 
-g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
+g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm,as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual)))
+#g.pm2=as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))
 
 #Most useful
 #Output shows encounters in each test set, encounter prediction, and % correctly classified
@@ -363,11 +424,17 @@ output_TrainSet.pmAll <-rbind(output_TrainSet.pmAll, output_TrainSet.pm)
 # output_IndDW<-data.frame(rep, "EncounterID"=test$EncounterID, "PredictedPop"=prediction, "EncounterCount"=test$EncounterCount) 
 # output_IndDWAll <- rbind(output_IndDWAll, output_IndDW)  #consolidates all individual whistle results for each iteration
 
+
+  
+  
 }
+
+
 
 ####Mean & StDev ####
 #After all forests are fit, take the cumulative confusion matrix and run some stats
-#Calculates overall results for each iteration, summing up all whistle classifications
+
+#Calculates overall results for each iteration, summing up all individual whistle classifications
 pel.diag<-round((results.pm[1,1])/(results.pm[1,1]+results.pm[1,2])*100,2) #pelagic
 mhi.diag<-round((results.pm[2,2])/(results.pm[2,1]+results.pm[2,2])*100,2) #mhi
 #calculate misclassification for pelagic and mhi
@@ -386,18 +453,18 @@ meanRealP <- mean(realP)
 meanFakeP <- mean(fakeP)
 meanRealM <- mean(realM)
 meanFakeM <- mean(fakeM)
-# seRealP <- se(realP)
-# seFakeP <- se(fakeP)
-# seRealM <- se(realM)
-# seFakeM <- se(fakeM)
+seRealP <- se(realP)
+seFakeP <- se(fakeP)
+seRealM <- se(realM)
+seFakeM <- se(fakeM)
 sdRealP <- sd(realP)
 sdFakeP <- sd(fakeP)
 sdRealM <- sd(realM)
 sdFakeM <- sd(fakeM)
 
-date='20180501 old'
+date='20180720'
 #Combine means and std errors into matrix
-sink("ConfMatrix_means_20180501.txt", append=T)
+sink("ConfMatrix_means_20180720.txt", append=T)
 PMmeans <- rbind("PEL"= c(meanRealP, meanFakeP), "MHI"=c(meanRealM, meanFakeM))
 colnames(PMmeans) <- c("PEL", "MHI")
 date
@@ -406,7 +473,7 @@ n_samps
 PMmeans
 sink()
 
-sink("ConfMatrix_stddevs_20180501.txt", append=T)
+sink("ConfMatrix_stddevs_20180720.txt", append=T)
 PMsds <- rbind("PEL"= c(sdRealP, sdFakeP), "MHI"=c(sdRealM, sdFakeM))
 colnames(PMsds) <- c("PEL", "MHI")
 date
@@ -423,31 +490,29 @@ proc.time() - ptm
 
 ###Write NEW WHISTLE DATA outputs to file
 ```{r}
-write.table(output_EncounterClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_newPvM.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_EncounterClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_TotalEncounterClass_newPvM_NoPel8.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_newPvM.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_TotalWhistleClass_newPvM_NoPel8.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-#write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_newPvM.csv", append = T, col.names=F, sep = ",")
+# write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180717//PcResults_TotalConfMatrix_newPvM_NoPel8.csv", append = T, col.names=F, sep = ",")
 
-write.table(output_TrainSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_newPvM.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_TrainSets_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestResults_newPvM.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_TestResults_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
-write.table(varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_ImportantVars_newPvM.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_ImportantVars_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+
+write.table(tuned.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180720//Top5ImpVar_PcResults_TunedParameters_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+
 ```
-###Write OLD WHISTLE DATA outputs to file
 ```{r}
-write.table(output_EncounterClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalEncounterClass_oldPvM.csv", append = T, row.names = T, col.names=T, sep = ",")
+rndF1 <- randomForest(train.X, train.Y, test.X, test.Y)
+plot(rndF1)
+rndF1.legend <- if (is.null(fit.pm$test$err.rate)) {colnames(fit.pm$err.rate)}
+                else {colnames(fit.pm$test$err.rate)}
 
-write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalWhistleClass_oldPvM.csv", append = T, row.names = F, col.names=T, sep = ",")
+legend("top", cex =0.5, legend=fit.pm, lty=c(1,2,3), col=c(1,2,3), horiz=T)
 
-#write.table(output_ConfMat.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TotalConfMatrix_newPvM.csv", append = T, col.names=F, sep = ",")
-
-write.table(output_TrainSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TrainSets_oldPvM.csv", append = T, col.names=T, sep = ",")
-
-write.table(output_TestSet.pmAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_TestResults_oldPvM.csv", append = T, col.names=T, sep = ",")
-
-write.table(output_varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//PcResults_ImportantVars_oldPvM.csv", append = T, col.names=T, sep = ",")
 ```
 
 
@@ -769,7 +834,7 @@ proc.time() - ptm
 
 
 
-```
+
 
 
 ```{r}
@@ -801,5 +866,16 @@ for(i in c(MHI)){
     
   }
 
+
+```
+
+#Combining old and new whistles for array data only
+```{r warning=FALSE, message=FALSE}
+library(reshape2)
+pcdata_old<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
+pcdata_new<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+pcdata_new<-pcdata_new[,-c(55:62)]
+pcdata_all<-rbind(pcdata_old, pcdata_new)
+pcdata_all<-droplevels(subset(pcdata_all, pcdata_all$population != 'nwhi'& pcdata_all$CruiseID != 'harp'))
 
 ```

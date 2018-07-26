@@ -29,10 +29,12 @@ library(tree)
 
 ```
 
-
+First, clean up the raw ROCCA file
 ```{r}
 #Load ROCCA data (already replaced 'NA' and '999' with '0')
-ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE raw.csv')
+
+#6/28/2018
+ROCCAdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE towed RAWall.csv')
 
 
 #Add species names to last columns and save
@@ -59,6 +61,8 @@ pcdata %>% mutate_if(is.character, as.factor) -> pcdata
 #i <- sapply(pcdata, is.factor)
 #pcdata[i] <- lapply(pcdata[i], as.character)
 
+
+###Added group column manually
 ###Add Population column and reorder
 pcdata$population <-NA
 levels(pcdata$population) <- c(levels(pcdata$population), "pel", "mhi", "nwhi")
