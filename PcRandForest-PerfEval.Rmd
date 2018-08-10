@@ -132,7 +132,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 100             # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 5        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
@@ -172,6 +172,8 @@ Meat of the Analysis
 ptm<-proc.time()
 
 results = matrix(0, nrow = 3, ncol = 3)
+#output_ModelFit = matrix(0, nrow=3, ncol = 4)
+output_ModelFit = NULL
 realP = c()
 realN = c()
 realM = c()
@@ -198,7 +200,7 @@ se <- function(x) sd(x)/sqrt(length(x))
 #### OVERALL LOOP TO DERIVE MEANS AND STANDARD DEVS ####  
 for(rep in 1:n_samps){ 
   
-  set.seed(rep) #YB placed the seed inside the loop bc it wasn't duplicating trees
+  #set.seed(rep) #YB placed the seed inside the loop bc it wasn't duplicating trees
   
   # Total groups included
   #This randomly samples 'nrep' groups from each population
@@ -306,7 +308,7 @@ tunedAll <- rbind(tunedAll, tuned)
 
 #### Run Random Forest ####
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-  fit <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=T, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
+  fit <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=F, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
   prediction <-predict(fit, newdata=test, predict.all = F, type='response') 
@@ -319,7 +321,7 @@ tunedAll <- rbind(tunedAll, tuned)
   
   #sums all 'TRUE' and divides by total
    accuracy <- sum((test$rightPred)/nrow(test)) 
-   accuracies <- c(accuracies, accuracy)
+   accuracies <- c(accuracies, accuracy) #correct classification
   ####RESULTS!!!#####  
   results.temp <- table(test$population, prediction)  # conf matrix of individual whistle counts
   
@@ -380,6 +382,10 @@ colnames(e) = c("EncounterClass", "Pct Correct") #, "EncounterID")
 
         
 #### OUTPUTS ####
+
+#Save each RF confusion matrix and OOB error
+output_ModelFit <- rbind(output_ModelFit, as.table(fit$confusion), mean(fit$err.rate))
+
 
 g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
 
