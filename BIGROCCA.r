@@ -22,7 +22,7 @@ for (i in seq_along(temp)){
 #Combine all ROCCA files from my_data list into one file
 big_ROCCA = do.call(what = rbind.data.frame, args = my_data)
 
-write.csv(big_ROCCA, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data/BigRoccaFile_PM_TowedAll_RAW_20180717.csv', row.names=F)
+write.csv(big_ROCCA, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_RAW_20180809.csv', row.names=F)
 
 
 #OR this one works to add csv files into a list. then one function can be applied to the dataframe list as a whole

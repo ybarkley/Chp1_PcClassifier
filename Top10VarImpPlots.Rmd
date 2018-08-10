@@ -31,17 +31,20 @@ pcdata <- subset(pcdata, pcdata$population != "nwhi")
 
 #subset important variables
 pcdata_sub <- pcdata.pm[, c(1,3,7,8,14,15,31)]
+#remove Pel8
+pcdata_sub <- subset(pcdata_sub, pcdata_sub$EncounterID != 'PcPEL8')
+
 
 
 #decimation test
-pcdata_sub <- pcdata[, c(1,2,29,30)]
+#pcdata_sub <- pcdata[, c(1,2,29,30)]
 
 
 #Turn data into long format with melt()
 data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("DURATION", "FREQQUARTER3","FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN", "FREQBEG" ))
 
 #decimation test
-data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN"))
+#data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN"))
 
 #splitting up the EncounterID labels (PcPel1, PcPel2 etc) to make them Pel1, Pel2, to fit better on the plot axis 
 data_melt$Encounter <-as.character(data_melt$EncounterID)
@@ -50,7 +53,7 @@ data_melt <- cbind(data_melt, data_meltENC)
 data_melt_sub <- data_melt[, c(1,7,3,4)]  #reorder columns with new encounter name col
 colnames(data_melt_sub)[2] <- "EncounterID" #rename new encounter name col
 
-#BY ENCOUNTER
+#BY ENCOUNTER####
 plot_enc<- ggplot(data_melt_sub, aes(y=value, x=EncounterID)) +  
   facet_wrap(~variable, scales = "free") +
   geom_boxplot(aes(colour=population)) +
@@ -67,34 +70,34 @@ ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\Pc
 
 
 
-#For decimation test
-plot_enc<- ggplot(data_melt_sub, aes(y=value, x=EncounterID)) +  
-  facet_wrap(~variable, scales = "free") +
-  geom_boxplot(aes(colour=population)) +
-  labs(title="Comparing slope values with different sampling freqs for PcMHI31 and PcMHI32", subtitle="(raw=500kHz, dec=192kHz)") + 
-  theme(plot.background = element_rect(fill = "white"),
-        axis.text.x=element_text(size=10), 
-        axis.text.y=element_text(size=10),
-        plot.title=element_text(size=20, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
-        plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
-          guides(fill=guide_legend(title="Population"))
-#save for decimation test plot
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/decimation_test/PcMHI31_32_Boxplot_decimation_20180702_1.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+# #For decimation test
+# plot_enc<- ggplot(data_melt_sub, aes(y=value, x=EncounterID)) +  
+#   facet_wrap(~variable, scales = "free") +
+#   geom_boxplot(aes(colour=population)) +
+#   labs(title="Comparing slope values with different sampling freqs for PcMHI31 and PcMHI32", subtitle="(raw=500kHz, dec=192kHz)") + 
+#   theme(plot.background = element_rect(fill = "white"),
+#         axis.text.x=element_text(size=10), 
+#         axis.text.y=element_text(size=10),
+#         plot.title=element_text(size=20, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
+#         plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))+
+#           guides(fill=guide_legend(title="Population"))
+# #save for decimation test plot
+# ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/decimation_test/PcMHI31_32_Boxplot_decimation_20180702_1.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
       
-#BY POPULATION
+#BY POPULATION####
   #boxplot
 plot_pop<- ggplot(data_melt, aes(y=value, x=population)) +  
   facet_wrap(~variable, scales = "free") +
   geom_boxplot(aes(colour=population)) +
- labs(title="New Whistle Data by Population", subtitle="(no HARP data, incremental random sampling)") + #(includes HARP data, mhi31-34)
+ labs(title="New Whistle Data by Population", subtitle="(towed data, incremental random sampling)") + #(includes HARP data, mhi31-34)
   theme(plot.background = element_rect(fill = "white"),
         axis.text.x=element_text(size=8),
         axis.text.y=element_text(size=8),
         plot.title=element_text(size=25, hjust=0.5, face="bold", colour="darkblue", vjust=-1),
         plot.subtitle=element_text(size=16, hjust=0.5, face="italic", color="black"))
 #saves with better resolution
-ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Pc_Boxplot_Population_noHARP.png', width = 12, height = 8, units = "in", type = "cairo-png")
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180720\\Pc_Boxplot_Population_PM.png', width = 12, height = 8, units = "in", type = "cairo-png")
 
   #density plot
 plot_popDens<- ggplot(data_melt, aes(x=value, fill=population)) +  

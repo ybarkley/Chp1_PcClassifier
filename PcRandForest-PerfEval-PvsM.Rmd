@@ -113,7 +113,7 @@ Will remove correlated variables based on the r value.
 ##Calculate Pearson's correlation coefficient for all variables. Remove variables -0.70 > r > 0.70.
 pcsub<-pcdata.pm[,6:52]
 
-pcsub<-pc_HarpFostex[,7:54]
+#pcsub<-pc_HarpFostex[,7:54]
 
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
@@ -283,8 +283,11 @@ registerDoParallel(cl, cores = detectCores())
 #### Formula ####
 # for the RF model with 'population' as the response and time-frequency measurements 
 
-## UNCORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:11],collapse="+")))
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:32],collapse="+")))
+
+
+## TOP 5 UNCORRELATED VARIABLES
+#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:11],collapse="+")))
 
 ## CORRELATED VARIABLES
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
@@ -462,9 +465,9 @@ sdFakeP <- sd(fakeP)
 sdRealM <- sd(realM)
 sdFakeM <- sd(fakeM)
 
-date='20180720'
+date='20180809'
 #Combine means and std errors into matrix
-sink("ConfMatrix_means_20180720.txt", append=T)
+sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180809\\ConfMatrix_means_20180809.txt", append=T)
 PMmeans <- rbind("PEL"= c(meanRealP, meanFakeP), "MHI"=c(meanRealM, meanFakeM))
 colnames(PMmeans) <- c("PEL", "MHI")
 date

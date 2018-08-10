@@ -6,7 +6,7 @@ output: html_notebook
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
-library(partykit)
+library(party) #changed from partykit
 library(caret)
 library(corrplot)
 library(parallel); 
@@ -24,7 +24,10 @@ library(ggplot2)
 #Set up encounters for RF
 ```{r}
 
-pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+
+#8/9/18
+pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PM_TowedAll_EDIT_20180717.csv')
 
 pcdata.pm <-droplevels(filter(pcdata.pm, population != "nwhi"))
 
@@ -33,14 +36,14 @@ pcdata.pm <-droplevels(filter(pcdata.pm, population != "nwhi"))
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
 #NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = c(26:30)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+MHI = c(31:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 #This is set up to be flexible to change later if needed
-nrep  = 5           # multiplier for total number of groups
+nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
-w = 90              # Number of whistles randomly pulled from each group 
+w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 1        #Zack: number of times you want to resample from your dataset
 
@@ -128,8 +131,16 @@ for(rep in 1:n_samps){
 # #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
 # 
 # ## CORRELATED VARIABLES
-cformPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
+cformPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[6:52],collapse="+"))) #Use variables to classify to population
 # 
+  
+#Requires Party 8/9/18
+cfit.pm <- cforest(cformPc, data = ctrain.pm, control=cforest_unbiased(mtry=6, ntree=100))
+VI <- varimp(cfit.pm, conditional = TRUE)  
+caret:::cforestStats(cfit.pm)
+
+RFfit.pm <- randomForest(cformPc, data = ctrain.pm, mtry = 6, ntree = 100, importance = T, replace = F, confusion=T)
+  
 #Requires partykit
 cfit.pm <- cforest(cformPc, data=ctrain.pm, ntree=1500, mtry = 6, control=ctree_control(mincriterion = 0, minsplit = 4L, minbucket = 2L))
 
