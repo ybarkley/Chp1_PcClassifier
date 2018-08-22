@@ -19,7 +19,7 @@ library(stringr)
 #new data
 pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\BigRoccaFile_PM_TowedAll.csv')
 
-pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/results/20180717/pcdata.pm_20180717.csv')
+pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/PcNWHI14-17_RoccaContourStats_20180813.csv')
 
 
 #decimation test
