@@ -187,7 +187,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 20         #number of times you want to resample from your dataset
+n_samps = 100         #number of times you want to resample from your dataset
 
 
 ```
@@ -203,8 +203,8 @@ ptm<-proc.time()
 #### Start Main Analysis ####
 results.pm = matrix(0, nrow = 2, ncol = 2)
 output_ModelFit.pm = NULL
-realP = c()
-realM = c()
+realP.pm = c()
+realM.pm = c()
 #use this format of output_WhistleClass on desktop (R version 3.3.1)
 output_WhistleClass = NULL
 #use this format of output_WhistleClass on laptop (R version 3.5.1)
@@ -391,9 +391,9 @@ results.pm = results.pm + results.pmtemp
 #For calculating means and standard dev for EACH ITERATION of confusion matrix
 #For a single iteration, stores separate cells of class results for calculating mean and standard error
 #YOU NEED THIS STEP 4/26/18, TRUST ME!
-realP <- c(realP,results.pmtemp[1,1])
+realP.pm <- c(realP.pm,results.pmtemp[1,1])
 #fakeP <- c(fakeP,results.pmtemp[1,2])
-realM <- c(realM,results.pmtemp[2,2])
+realM.pm <- c(realM.pm,results.pmtemp[2,2])
 #fakeM <- c(fakeM,results.pmtemp[2,1])
         
 #### OUTPUTS ####
@@ -455,9 +455,9 @@ seRealP.pm <- se(realP.pm)
 seRealM.pm <- se(realM.pm)
 
  
-date='20180818'
+date='20180822'
 #Combine means and std errors into matrix
-sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180818\\ConfMatrixPM_means_20180818.txt", append=T)
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
 PNMmeans.pm <- cbind("PEL"= c(meanRealP.pm), "MHI"=c(meanRealM.pm)) #means
 PNMse.pm <- cbind("PEL"= c(seRealP.pm), "MHI"=c(seRealM.pm)) #standard errors
 PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
@@ -491,7 +491,32 @@ write.table(tunedAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\resul
 
 ```
 
+#For laptop directories
 
+```{r}
+se <- function(x) sd(x)/sqrt(length(x))
+
+meanRealP <- mean(realP)
+meanRealM <- mean(realM)
+seRealP <- se(realP)
+seRealM <- se(realM)
+
+ 
+date='20180822'
+#Combine means and std errors into matrix
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
+PNMmeans.pm <- cbind("PEL"= c(meanRealP), "MHI"=c(meanRealM)) #means
+PNMse.pm <- cbind("PEL"= c(seRealP), "MHI"=c(seRealM)) #standard errors
+PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
+
+date
+w
+n_samps
+PNMtotal.pm
+sink()
+
+
+```
 ###Write NEW WHISTLE DATA outputs to file
 ```{r}
 
