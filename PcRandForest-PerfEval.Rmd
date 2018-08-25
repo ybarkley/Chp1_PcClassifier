@@ -456,7 +456,7 @@ seRealM <- se(realM)
  
 date='20180824'
 #Combine means and std errors into matrix
-sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180824.txt", append=T)
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20180824.txt", append=T)
 PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
 PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
 PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
@@ -469,20 +469,20 @@ sink()
 
 
 
- 
-date='20180818'
-#Combine means and std errors into matrix
-sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180818\\ConfMatrix_means_20180809.txt", append=T)
-PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
-PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
-PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
-
-date
-w
-n_samps
-PNMtotal
-sink()
- 
+#For saving to laptop 
+# date='20180818'
+# #Combine means and std errors into matrix
+# sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180818\\ConfMatrix_means_20180809.txt", append=T)
+# PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
+# PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
+# PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
+# 
+# date
+# w
+# n_samps
+# PNMtotal
+# sink()
+#  
 ``` 
  
  
@@ -504,6 +504,8 @@ write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data
 
 write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PMN_20180824.csv", append = T, col.names=T, sep = ",")
 
+write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PMN_20180824.csv", append = T, col.names=F, sep = ",")
+
 ```
  
 
@@ -519,7 +521,6 @@ write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//d
 
 write.table(output_ModelFit, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalModels_20180818.csv", append = T, col.names=F, sep = ",")
 
-<<<<<<< HEAD
 write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TrainSets_20180818.csv", append = T, col.names=F, sep = ",")
 
 write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TestSets_20180818.csv", append = T, col.names=F, sep = ",")
@@ -527,14 +528,7 @@ write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//dat
 write.table(output_varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalImportantVars_20180818.csv", append = T, col.names=T, sep = ",")
 
 write.table(tunedAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TunedParamters_20180818.csv", append = T, col.names=T, sep = ",")
-=======
-write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TrainSets_20180818.csv", append = T, col.names=F, sep = ",")
-write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TestSets_20180818.csv", append = T, col.names=F, sep = ",")
 
-write.table(output_varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalImportantVars_20180818.csv", append = T, col.names=T, sep = ",")
-#SAVE TUNED SETTINGS TOO
-write.table(tunedAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TunedParamters_20180818.csv", append = T, col.names=T, sep = ",")
->>>>>>> fa7c61af0c8961fa88e537e35f0db293f204bd98
 
 ```
 

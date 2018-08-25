@@ -475,19 +475,21 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PM_20180822.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PN_20180824.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PN_20180824.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_ModelFit.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PN_20180824.csv", append = T, col.names=F, sep = ",")
 
 ```
 
