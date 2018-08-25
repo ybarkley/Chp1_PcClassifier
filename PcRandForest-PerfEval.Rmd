@@ -387,25 +387,31 @@ colnames(e) = c("EncounterClass", "Pct Correct") #, "EncounterID")
         
 #### OUTPUTS ####
 
+#1.
 #Save each RF model's confusion matrix and OOB error
 output_ModelFit <- rbind(output_ModelFit, as.table(fit$confusion), mean(fit$err.rate))
 
+#2.
 #Save results for each individual whistle, including overall predictions based on majority vote of forest and individual tree predictions
 g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
 
 output_WhistleClass <- smartbind(output_WhistleClass, g, fill = NA, sep=':')
 
+#3.
 #table keeping track of confusion matrices for all iterations
 output_Results<-rbind(output_Results, rep, results.temp, accuracy=signif(accuracy, digits = 3)) 
 
+#4.
 #df to show encounters used in each training set  
 output_TrainSet <- data.frame(rep, "EncounterID" = sort(unique(train$EncounterID))) #, "encounter" = sort(unique(train$group)))
 output_TrainSetAll <-rbind(output_TrainSetAll, output_TrainSet)
 
+#5.
 #df to show encounters used in each test set
 output_TestSet <- data.frame(rep, "EncounterID" = unique(test$EncounterID), e) #, "encounter" = sort(unique(train$group)))
 output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 
+#6.
   # Important Variables
   varIMPtemp <- as.data.frame(importance(fit))
   varIMP <- varIMPtemp[order(varIMPtemp$MeanDecreaseAccuracy), , drop =F]
@@ -464,10 +470,11 @@ write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//d
 write.table(output_ModelFit, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalModels_20180818.csv", append = T, col.names=F, sep = ",")
 
 write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TrainSets_20180818.csv", append = T, col.names=F, sep = ",")
+
 write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TestSets_20180818.csv", append = T, col.names=F, sep = ",")
 
 write.table(output_varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalImportantVars_20180818.csv", append = T, col.names=T, sep = ",")
-#SAVE TUNED SETTINGS TOO
+
 write.table(tunedAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TunedParamters_20180818.csv", append = T, col.names=T, sep = ",")
 
 ```
