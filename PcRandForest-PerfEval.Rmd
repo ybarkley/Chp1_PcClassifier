@@ -178,12 +178,15 @@ output_ModelFit = NULL
 realP = c()
 realN = c()
 realM = c()
-output_WhistleClass = data.frame(Doubles=double(),
-                 Ints=integer(),
-                 Factors=factor(),
-                 Logicals=logical(),
-                 Characters=character(),
-                 stringsAsFactors=FALSE)
+#use this format of output_WhistleClass on desktop (R version 3.3.1)
+output_WhistleClass = NULL
+#use this format of output_WhistleClass on laptop (R version 3.5.1)
+# output_WhistleClass = data.frame(Doubles=double(),
+#                  Ints=integer(),
+#                  Factors=factor(),
+#                  Logicals=logical(),
+#                  Characters=character(),
+#                  stringsAsFactors=FALSE)
 output_EncounterClass=NULL
 output_Results=NULL
 output_TrainSetAll=NULL

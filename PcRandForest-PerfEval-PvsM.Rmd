@@ -24,7 +24,7 @@ library(doParallel);
 library(gtools)
 library(devtools) 
 library(dplyr)
-library(ROCR)
+#library(ROCR)
 library(Hmisc)
 library(tree)
 ```
@@ -167,22 +167,16 @@ tmp <- lapply(p, plot)
 
 #Set up encounters for RF using new or old whistle data
 ```{r}
-#new whistles
-#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
-
-#old whistles
-#pcdata.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA OLD raw.csv')
-#pcdata.pm <- droplevels(subset(pcdata.pm, population == 'pel' | population == 'mhi'))
-
-
 #all whistles for pel and mhi only
-pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+#pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+
+pcdata.pm <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #try using only top 5 important variables
-pcdata.pm <- pcdata.pm[, c(1:6, 8, 12:15)]
+#pcdata.pm <- pcdata.pm[, c(1:6, 8, 12:15)]
 
 # Need even number of encounters for each population represented in the training data. 
-PEL = 1:7                # designated groupID's assigned for each pelagic group 
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
 #NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
 MHI = c(31:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
@@ -193,7 +187,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2         #number of times you want to resample from your dataset
+n_samps = 100         #number of times you want to resample from your dataset
 
 
 ```
@@ -209,14 +203,17 @@ ptm<-proc.time()
 #### Start Main Analysis ####
 results.pm = matrix(0, nrow = 2, ncol = 2)
 output_ModelFit.pm = NULL
-realP = c()
-realM = c()
-output_WhistleClass.pm = data.frame(Doubles=double(),
-                 Ints=integer(),
-                 Factors=factor(),
-                 Logicals=logical(),
-                 Characters=character(),
-                 stringsAsFactors=FALSE)
+realP.pm = c()
+realM.pm = c()
+#use this format of output_WhistleClass on desktop (R version 3.3.1)
+output_WhistleClass = NULL
+#use this format of output_WhistleClass on laptop (R version 3.5.1)
+# output_WhistleClass = data.frame(Doubles=double(),
+#                  Ints=integer(),
+#                  Factors=factor(),
+#                  Logicals=logical(),
+#                  Characters=character(),
+#                  stringsAsFactors=FALSE)
 output_EncounterClass.pm=NULL
 output_Results.pm=NULL
 output_TrainSetAll.pm=NULL
@@ -377,16 +374,16 @@ conf.mat.pm <- rbind(pel.row, mhi.row) #(% of whistles)
 colnames(conf.mat.pm)=c("Pelagic", "MHI")
 #conf.mat.pm
 
-true.pel = if(pel.pel>60) 'Pelagic' else 'Ambiguous'
+true.pel = if(pel.pel>=60) 'Pelagic' else 'Ambiguous'
 #true.nwhi = if(nwhi.nwhi>50) 'NWHI' else 'Ambiguous'
-true.mhi = if(mhi.mhi>60) 'MHI' else 'Ambiguous'
+true.mhi = if(mhi.mhi>=60) 'MHI' else 'Ambiguous'
 true.enc = data.frame(rbind(pel.pel, mhi.mhi))
 #d = as.data.frame(unique(test$EncounterID))
 #d = as.data.frame(d[c(1:3), ])
 e.pm=c()
 e.pm=as.data.frame(rbind(true.pel, true.mhi))
 e.pm=cbind(e.pm, true.enc)
-colnames(e.pm) = c("EncounterClass", "% Correct") #, "EncounterID")
+colnames(e.pm) = c("EncounterClass", "PctCorrect") #, "EncounterID")
 
 #Summed results confusion matrix after each iteration
 results.pm = results.pm + results.pmtemp 
@@ -394,14 +391,12 @@ results.pm = results.pm + results.pmtemp
 #For calculating means and standard dev for EACH ITERATION of confusion matrix
 #For a single iteration, stores separate cells of class results for calculating mean and standard error
 #YOU NEED THIS STEP 4/26/18, TRUST ME!
-realP <- c(realP,results.pmtemp[1,1])
+realP.pm <- c(realP.pm,results.pmtemp[1,1])
 #fakeP <- c(fakeP,results.pmtemp[1,2])
-realM <- c(realM,results.pmtemp[2,2])
+realM.pm <- c(realM.pm,results.pmtemp[2,2])
 #fakeM <- c(fakeM,results.pmtemp[2,1])
         
 #### OUTPUTS ####
-
-
 #1.
 #Save each RF model's confusion matrix and OOB error
 output_ModelFit.pm <- rbind(output_ModelFit.pm, as.table(fit.pm$confusion), mean(fit.pm$err.rate))
@@ -410,7 +405,7 @@ output_ModelFit.pm <- rbind(output_ModelFit.pm, as.table(fit.pm$confusion), mean
 #Most comprehensive information about overall predictions, proportional classification of trees, and tree predictions for each whistle
 g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm,as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual)))
 
-output_WhistleClass.pm <- smartbind(output_WhistleClass.pm, g.pm)
+output_WhistleClass.pm <- smartbind(output_WhistleClass.pm, g.pm, fill = NA, sep=':')
 
 #3.
 #table keeping track of confusion matrices for all iterations
@@ -436,6 +431,16 @@ output_TestSetAll.pm <-rbind(output_TestSetAll.pm, output_TestSet.pm)
 
 }
 
+#7.
+#Overall correct classification scores
+correctP <- results.pm[1,1]/(results.pm[1,1]+results.pm[1,2])*100
+correctM <- results.pm[2,2]/(results.pm[2,1]+results.pm[2,2])*100
+
+output_CorrectClass <- rbind(results.pm,cbind(correctP, correctM))
+
+
+
+
 proc.time() - ptm
 
 ```
@@ -450,9 +455,9 @@ seRealP.pm <- se(realP.pm)
 seRealM.pm <- se(realM.pm)
 
  
-date='20180818'
+date='20180822'
 #Combine means and std errors into matrix
-sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180818\\ConfMatrixPM_means_20180818.txt", append=T)
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
 PNMmeans.pm <- cbind("PEL"= c(meanRealP.pm), "MHI"=c(meanRealM.pm)) #means
 PNMse.pm <- cbind("PEL"= c(seRealP.pm), "MHI"=c(seRealM.pm)) #standard errors
 PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
@@ -466,11 +471,57 @@ sink()
 
 ```
 
+#save to desktop OneDrive
+```{r}
+
+#Save overall confusion matrix
+write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_Results.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_WhistleClass.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PM_20180822.csv", append = T, row.names = F, col.names=T, sep = ",")
+
+write.table(output_TrainSetAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PM_20180822.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_TestSetAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PM_20180822.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_varIMPtotal.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PM_20180822.csv", append = T, col.names=T, sep = ",")
+
+write.table(tunedAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PM_20180822.csv", append = T, col.names=T, sep = ",")
+
+```
+
+#For laptop directories
+
+```{r}
+se <- function(x) sd(x)/sqrt(length(x))
+
+meanRealP <- mean(realP)
+meanRealM <- mean(realM)
+seRealP <- se(realP)
+seRealM <- se(realM)
+
+ 
+date='20180822'
+#Combine means and std errors into matrix
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
+PNMmeans.pm <- cbind("PEL"= c(meanRealP), "MHI"=c(meanRealM)) #means
+PNMse.pm <- cbind("PEL"= c(seRealP), "MHI"=c(seRealM)) #standard errors
+PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
+
+date
+w
+n_samps
+PNMtotal.pm
+sink()
+
+
+```
 ###Write NEW WHISTLE DATA outputs to file
 ```{r}
 
 #Save overall confusion matrix
-write.table(results.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///PcResults_ConfusionMatrix_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///PcResults_ConfusionMatrix_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 write.table(output_Results.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalResults_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
