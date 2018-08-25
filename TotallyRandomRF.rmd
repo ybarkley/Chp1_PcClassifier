@@ -15,14 +15,6 @@ This is an R Markdown document. Markdown is a simple formatting syntax for autho
 
 When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
-```{r cars}
----
-title: "Encounter Classifier"
-author: "Yvonne Barkley"
-date: "April 16, 2018"
-output: html_document
----
-
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
@@ -48,8 +40,8 @@ library(ggplot2)
 #7/20/18
 pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\pcdata.pm_uncorrelated_20180717.csv')
 
-PEL = 1:7                # designated groupID's assigned for each pelagic group 
-#NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
+NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
 MHI = 31:34    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 #This is set up to be flexible to change later if needed
@@ -59,7 +51,7 @@ npel  = 1           # number of pelagic schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 10        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 prop = 0.5          #proportion of whistles in training data
 ```
 
@@ -70,29 +62,26 @@ prop = 0.5          #proportion of whistles in training data
 
 ptm <- proc.time()
 
-results.enc = matrix(0, nrow = 8, ncol = 2) #based on total # of groups
-realP = c()
-fakeP = c()
-realM = c()
-fakeM = c()
+results.enc = matrix(0, nrow = 12, ncol = 3) #based on total # of groups
+output_ModelFit.enc = NULL
 output_WhistleClass.enc =NULL
-output_EncounterClass.enc=NULL
-output_RawResults.enc=NULL
-output_TrainSet.encAll=NULL
-output_TestSet.encAll = NULL
-output_Votes.encAll=NULL
-tuned.encAll=NULL
-varIMPtotal.enc =NULL
-## GIANT LOOP---BEWARE ####
+output_Results.enc=NULL
+output_TrainSetAll.enc=NULL
+output_TestSetAll.enc = NULL
+output_VotesAll.enc=NULL
+tunedAll.enc=NULL
+output_varIMPtotal.enc =NULL
+accuracies.enc = c()
 
-falsehope=c()
+
+## GIANT LOOP---BEWARE ####
 
 for(rep in 1:n_samps){
 
 #7/20/18 This is a totally random RF using the same partitioning as the Encounter Classifier
 
   
-#Randomly select only 4 out of 7 pelagic encounters  
+#Randomly select only 4 out of 8 pelagic encounters  
  N_pel = as.numeric(sample(PEL, nrep*npel))
  
  
@@ -100,48 +89,59 @@ for(rep in 1:n_samps){
 
   
 #From all encounters, sample 'prop' whistles from each encounter
-enc_all = NULL
-for(i in c(MHI, N_pel)){
-  enc_sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
-  enc_samp=enc_sub[sample(nrow(enc_sub), w),] #randomly samples w whistles from total whistles
-  enc_all <-rbind(enc_all, enc_samp) #mixed up list of whistles
+all.enc = NULL
+for(i in c(N_pel, NWHI, MHI)){
+  sub.enc=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+  samp.enc=sub.enc[sample(nrow(sub.enc), w),] #randomly samples w whistles from total whistles
+  all.enc <-rbind(all.enc, samp.enc) #mixed up list of whistles
   
 }
 
-enc_part <- createDataPartition(y=enc_all$EncounterID,p=prop,list=FALSE)
-enc_train <- enc_all[enc_part,]  
-enc_test <- enc_all[-enc_part,]
+  #Correlation Step####
+pcsub.enc<-all.enc[,7:53]
+#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp.enc <- cor(pcsub.enc)
+tmp.enc[upper.tri(tmp.enc)] <- 0
+diag(tmp.enc) <- 0
+pcsubcor.enc <- pcsub.enc[,!apply(tmp.enc,2,function(x) any(x > 0.80 | x < -0.80))]
+
+all.enc<- cbind(all.enc[, c(1:6)], pcsubcor.enc)
+
+
+part.enc <- createDataPartition(y=all.enc$EncounterID,p=prop,list=FALSE)
+train.enc <- all.enc[part.enc,]  
+test.enc <- all.enc[-part.enc,]
 
 
 
-##############################
+
 ## Set up a dataframe where each row is a specific 
 ## combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-##############################
-mtry_vals = 5:7 
-ntree_vals = seq(501,3001,250) #from, to, by
-tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
-#################################
+mtry_vals = 5:8 
+ntree_vals = seq(500,5000,500) #from, to, by
+tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
+
+
 ## Initiate Cluster
-#################################
+
 cl = makeCluster(detectCores())
 registerDoParallel(cl, cores = detectCores())
 
-############################################
-##Create the formula for the RF model with 'population' as the response and time-frequency measurements from uncorrelated data as the covariates
-############################################
-#formPc.new <- as.formula(paste("population ~ ", paste(names(pcnew)[7:36],collapse="+")))
-formPc_enc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:32],collapse="+"))) #Use variables to classify to encounter
 
-#######################################
+##Create the formula for the RF model with 'population' as the response and time-frequency measurements from uncorrelated data as the covariates
+
+#formPc.new <- as.formula(paste("population ~ ", paste(names(pcnew)[7:36],collapse="+")))
+formPc.enc <- as.formula(paste("population ~ ", paste(names(all.enc)[7:length(all.enc)],collapse="+"))) #Use variables to classify to encounter
+
+
 ##The foreach function is the loop function for parallel processing. 
 ##It uses %dopar% which partitions the loop among your cores, then combines each output using the .combine argument. 
 
-x = foreach(i = 1:nrow(tune_settings2), .combine = rbind) %dopar% { 
+x = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
   library(randomForest)
-  do_RF2 = randomForest(formPc_enc, data = enc_train, test = enc_test, ntree = tune_settings2$ntree[i], mtry = tune_settings2$mtry[i])
-  print(do_RF2$err.rate[tune_settings2$ntree[i],])
+  do_RF2 = randomForest(formPc.enc, data = train.enc, test = test.enc, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])
+  print(do_RF2$err.rate[tune_settings$ntree[i],])
 }
 
 #so, for each of the parameter combinations, i.e., rows of the tune_settings df, the RF is run using those 
@@ -150,53 +150,96 @@ x = foreach(i = 1:nrow(tune_settings2), .combine = rbind) %dopar% {
 
 #NB: .combine can be anything, really, for example .combine = c for a vector, .combine = list for a list, etc.
 
-#################################
+
 ## Stop Cluster
-#################################
+
 stopCluster(cl)
 
-########################################
+
 ## Combine settings and results
-########################################
-tune_settings2 = cbind(tune_settings2, x)
-########################################
+
+tune_settings.enc = cbind(tune_settings, x)
+
 ## Optimal Settings: the settings combo
 ## that has the lowest OOB rate
-#######################################
-tuned.enc<-tune_settings2[which.min(tune_settings2$OOB),]
-tuned.encAll <- rbind(tuned.encAll, tuned.enc)
+
+tuned.enc<-tune_settings.enc[which.min(tune_settings.enc$OOB),]
+tunedAll.enc <- rbind(tunedAll.enc, tuned.enc)
  
 ### RANDOM FOREST ####
-accuracy.enc <- c()
-enc_pred.table=NULL
 
 
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-enc_fit <- randomForest(formPc_enc, data=enc_train, ntree=tuned.enc[1,2], importance=TRUE, replace=T, mtry=tuned.enc[1,1], norm.votes=T, confusion=T, keep.inbag=T, proximity=T) 
+fit.enc <- randomForest(formPc.enc, data=train.enc, ntree=tuned.enc[1,2], importance=TRUE, replace=T, mtry=tuned.enc[1,1], norm.votes=T, confusion=T, keep.inbag=T, proximity=T) 
 
-enc_prediction <-predict(enc_fit, newdata=enc_test, predict.all = F, type='response') #prediction for encounter of test data using RF model, 'fit'
-enc_prediction_vote <-predict(enc_fit, newdata=enc_test, predict.all = T, type='vote') #prediction for encounter of test data using RF model, 'fit'
-enc_test$rightPred <- as.character(enc_prediction) == as.character(enc_test$EncounterID) #shows T/F for individual whistles and whether they were classified correctly
-accuracy.enc <- sum((enc_test$rightPred)/nrow(enc_test)) #sums all 'TRUE' and divides by total
+prediction.enc <-predict(fit.enc, newdata=test.enc, predict.all = F, type='response') #prediction for encounter of test data using RF model, 'fit'
+prediction_vote.enc <-predict(fit.enc, newdata=test.enc, predict.all = T, type='vote') #prediction for encounter of test data using RF model, 'fit'
+test.enc$rightPred <- as.character(prediction.enc) == as.character(test.enc$EncounterID) #shows T/F for individual whistles and whether they were classified correctly
+accuracy.enc <- sum((test.enc$rightPred)/nrow(test.enc)) #sums all 'TRUE' and divides by total
+accuracies.enc <- c(accuracies.enc, accuracy.enc)
 
 ###RESULTS!!!##################################  
-enc_results.temp <- table(enc_test$EncounterID, enc_prediction)    
+results.enctemp <- table(test.enc$EncounterID, prediction.enc)    
+
+results.enc <- results.enc + results.enctemp  
+
+#### OUTPUTS ####
+
+#1.
+output_ModelFit.enc <- rbind(output_ModelFit.enc, as.table(fit.enc$confusion), mean(fit.enc$err.rate))
 
 
+
+
+
+
+#6.
 # Important Variables
-  varIMPtemp.enc <- as.data.frame(importance(enc_fit))
+  varIMPtemp.enc <- as.data.frame(importance(fit.enc))
   varIMP.enc <- varIMPtemp.enc[order(varIMPtemp.enc$MeanDecreaseGini), , drop =F]
-  varIMPtotal.enc <- rbind(varIMPtotal.enc, "REP"=rep, varIMP.enc)
-
-
-results.enc <- results.enc + enc_results.temp  
-
+  output_varIMPtotal.enc <- rbind(output_varIMPtotal.enc, "REP"=rep, varIMP.enc)
 
 }
 
-proc.time()-ptm
+#Manipulate results.enc
+pel.pel.enc = sum(results.enc[1:4])
+pel.nwhi.enc = sum(results.enc[1,2],results.enc[2,2],results.enc[3,2],results.enc[4,2])
+pel.mhi.enc = sum(results.enc[1,3],results.enc[2,3],results.enc[3,3],results.enc[4,3])
 
-write.table(results.enc, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180720/TotallyRandom_20180721_2.csv', sep=",", append=TRUE)
+nwhi.pel.enc = sum(results.enc[5:8])
+nwhi.nwhi.enc = sum(results.enc[5,2],results.enc[6,2],results.enc[7,2],results.enc[8,2])
+nwhi.mhi.enc = sum(results.enc[5,3],results.enc[6,3],results.enc[7,3],results.enc[8,3])
+
+mhi.pel.enc = sum(results.enc[9:12])
+mhi.nwhi.enc = sum(results.enc[9,2],results.enc[10,2],results.enc[11,2],results.enc[12,2])
+mhi.mhi.enc = sum(results.enc[9,3],results.enc[10,3],results.enc[11,3],results.enc[12,3])
+
+#Consolidate back into confusion matrix with correct class scores
+pel.row.enc = c(pel.pel.enc, pel.nwhi.enc, pel.mhi.enc)
+nwhi.row.enc = c(nwhi.pel.enc, nwhi.nwhi.enc, nwhi.mhi.enc)
+mhi.row.enc = c(mhi.pel.enc, mhi.nwhi.enc, mhi.mhi.enc)
+
+correctP.enc = round((pel.pel.enc/sum(pel.pel.enc,pel.nwhi.enc,pel.mhi.enc)*100), 2)
+correctN.enc = round((nwhi.nwhi.enc/sum(nwhi.pel.enc,nwhi.nwhi.enc,nwhi.mhi.enc)*100), 2)
+correctM.enc = round((mhi.mhi.enc/sum(mhi.pel.enc,mhi.nwhi.enc,mhi.mhi.enc)*100), 2)
+
+conf.mat.enc <-data.frame(rbind("Pelagic"=pel.row.enc, "NWHI"=nwhi.row.enc, "MHI"=mhi.row.enc, cbind(correctP.enc,correctN.enc,correctM.enc)))
+
+colnames(conf.mat.enc)=c("Pelagic", "NWHI", "MHI")
+
+
+
+
+
+
+
+proc.time()-ptm
+```
+
+
+
+```{r}
+write.table(results.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/TotallyRandom_20180824.csv', sep=",", append=TRUE)
 ```
 
 #enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations

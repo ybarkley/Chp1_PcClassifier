@@ -405,7 +405,7 @@ g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCou
 output_WhistleClass <- smartbind(output_WhistleClass, g, fill = NA, sep=':')
 
 #3.
-#table keeping track of confusion matrices for all iterations
+#table keeping track of individual confusion matrices for all iterations
 output_Results<-rbind(output_Results, rep, results.temp, accuracy=signif(accuracy, digits = 3)) 
 
 #4.
