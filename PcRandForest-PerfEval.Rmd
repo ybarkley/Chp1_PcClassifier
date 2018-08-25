@@ -23,7 +23,7 @@ library(doParallel);
 library(gtools)
 library(devtools) 
 library(dplyr)
-library(ROCR)
+#library(ROCR)
 library(Hmisc)
 library(tree)
 
@@ -114,8 +114,12 @@ write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_201
 #pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv')
 
 
-#Start with all variables and eliminate correlated variables for individual random foreste
-pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+
+#Laptop directory
+#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+
+#desktop directory
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #Remove MHI29, cluster 4
 #pcdata <-droplevels(filter(pcdata, EncounterID != 'PcMHI29'))
@@ -132,7 +136,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150             # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 20        #Zack: number of times you want to resample from your dataset
+n_samps = 100        #Zack: number of times you want to resample from your dataset
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
@@ -187,7 +191,7 @@ output_WhistleClass = NULL
 #                  Logicals=logical(),
 #                  Characters=character(),
 #                  stringsAsFactors=FALSE)
-output_EncounterClass=NULL
+#output_EncounterClass=NULL
 output_Results=NULL
 output_TrainSetAll=NULL
 output_TestSetAll = NULL
@@ -427,6 +431,13 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 
 }
 
+correctP <- round((results[1,1]/(results[1,1]+results[1,2]+results[1,3])*100), 2)
+correctN <- round((results[2,2]/(results[2,1]+results[2,2]+results[2,3])*100), 2)
+correctM <- round((results[3,3]/(results[3,1]+results[3,2]+results[3,3])*100), 2)
+
+output_CorrectClass <- rbind(results,cbind(correctP, correctN, correctM))
+
+
  proc.time() - ptm
  
 ``` 
@@ -441,6 +452,22 @@ meanRealM <- mean(realM)
 seRealP <- se(realP)
 seRealN <- se(realN)
 seRealM <- se(realM)
+
+ 
+date='20180824'
+#Combine means and std errors into matrix
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180824.txt", append=T)
+PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
+PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
+PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
+
+date
+w
+n_samps
+PNMtotal
+sink()
+
+
 
  
 date='20180818'
@@ -459,19 +486,40 @@ sink()
 ``` 
  
  
+ #save to desktop OneDrive
+```{r}
+
+#Save overall confusion matrix
+write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PMN_20180824.csv", append = T, row.names = F, col.names=T, sep = ",")
+
+write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+
+write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+
+```
+ 
 
 ###Write outputs to file
 ```{r}
 
 #Save overall confusion matrix
-write.table(results, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_ConfusionMatrix_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(results, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_ConfusionMatrix_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalResults_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalResults_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalWhistleClass_20180818.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalWhistleClass_20180818.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_ModelFit, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalModels_20180818.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalModels_20180818.csv", append = T, col.names=F, sep = ",")
 
+<<<<<<< HEAD
 write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TrainSets_20180818.csv", append = T, col.names=F, sep = ",")
 
 write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TestSets_20180818.csv", append = T, col.names=F, sep = ",")
@@ -479,6 +527,14 @@ write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//dat
 write.table(output_varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TotalImportantVars_20180818.csv", append = T, col.names=T, sep = ",")
 
 write.table(tunedAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PcResults_TunedParamters_20180818.csv", append = T, col.names=T, sep = ",")
+=======
+write.table(output_TrainSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TrainSets_20180818.csv", append = T, col.names=F, sep = ",")
+write.table(output_TestSetAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TestSets_20180818.csv", append = T, col.names=F, sep = ",")
+
+write.table(output_varIMPtotal, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TotalImportantVars_20180818.csv", append = T, col.names=T, sep = ",")
+#SAVE TUNED SETTINGS TOO
+write.table(tunedAll, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180824//PcResults_TunedParamters_20180818.csv", append = T, col.names=T, sep = ",")
+>>>>>>> fa7c61af0c8961fa88e537e35f0db293f204bd98
 
 ```
 

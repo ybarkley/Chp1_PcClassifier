@@ -95,13 +95,13 @@ pcdata[pcdata$group %in% c(31:34), "population"] <- "mhi"
 #pcdata[pcdata$group %in% c(14:17), "population"] <- "nwhi"
 pcdata[pcdata$group %in% c(1:8), "population"] <- "pel"
 pcdata$population <- as.factor(pcdata$population)
-pcdata.pm<- pcdata[, c(60, 1:59)]
+pcdata.pn<- pcdata[, c(60, 1:59)]
 
 #Change column namec
-colnames(pcdata.pm)[2] <- "EncounterID"
+colnames(pcdata.pn)[2] <- "EncounterID"
 
 #save file
-write.csv(pcdata.pm, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PM_TowedAll_EDIT_20180717.csv', row.names=F)
+write.csv(pcdata.pn, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PM_TowedAll_EDIT_20180717.csv', row.names=F)
 
 ```
 
@@ -111,7 +111,7 @@ Will remove correlated variables based on the r value.
 ##Correlation?#### 
 # Including correlated variables would mostly impact the important variables
 ##Calculate Pearson's correlation coefficient for all variables. Remove variables -0.70 > r > 0.70.
-pcsub<-pcdata.pm[,6:52]
+pcsub<-pcdata.pn[,6:52]
 
 #pcsub<-pc_HarpFostex[,7:54]
 
@@ -124,7 +124,7 @@ pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 #remove FreqCOFM
 pcsubcor <-pcsubcor[, -6]
 #Adding beginning freq, range, freqquarter3. See Correlation_20180717.xlsx for more details. 
-pcsubcor <-cbind(pcsubcor, pcdata.pm[, c(9,11)]) #add in FreqBeg & Range
+pcsubcor <-cbind(pcsubcor, pcdata.pn[, c(9,11)]) #add in FreqBeg & Range
 pcsubcor <-cbind(pcsubcor, pc_HarpFostex[, c(10,12)]) #add in FreqBeg & Range
 tmp_new <- cor(pcsubcor)
 tmp_new[upper.tri(tmp_new)] <- 0
@@ -134,7 +134,7 @@ write.csv(tmp_new, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results/2
 
 
 #Adding first 5 cols plus a few freq variables that were correlated and removed altogether. 
-  pcdata.pm <- cbind(pcdata.pm[, c(1:5)], pcsubcor)
+  pcdata.pn <- cbind(pcdata.pn[, c(1:5)], pcsubcor)
   pc_HarpFostex <- cbind(pc_HarpFostex[, c(1:5)], pcsubcor)
 
  write.csv(pc_HarpFostex, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results/20180720/pcdata.HarpFostex_201807123.csv', row.names=F)   
@@ -168,12 +168,12 @@ tmp <- lapply(p, plot)
 #Set up encounters for RF using new or old whistle data
 ```{r}
 #all whistles for pel and mhi only
-#pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+#pcdata.pn <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
-pcdata.pm <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+pcdata.pn <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #try using only top 5 important variables
-#pcdata.pm <- pcdata.pm[, c(1:6, 8, 12:15)]
+#pcdata.pn <- pcdata.pn[, c(1:6, 8, 12:15)]
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -201,12 +201,12 @@ ptm<-proc.time()
 
 
 #### Start Main Analysis ####
-results.pm = matrix(0, nrow = 2, ncol = 2)
-output_ModelFit.pm = NULL
-realP.pm = c()
-realM.pm = c()
+results.pn = matrix(0, nrow = 2, ncol = 2)
+output_ModelFit.pn = NULL
+realP.pn = c()
+realM.pn = c()
 #use this format of output_WhistleClass on desktop (R version 3.3.1)
-output_WhistleClass = NULL
+output_WhistleClass.pn = NULL
 #use this format of output_WhistleClass on laptop (R version 3.5.1)
 # output_WhistleClass = data.frame(Doubles=double(),
 #                  Ints=integer(),
@@ -214,17 +214,17 @@ output_WhistleClass = NULL
 #                  Logicals=logical(),
 #                  Characters=character(),
 #                  stringsAsFactors=FALSE)
-output_EncounterClass.pm=NULL
-output_Results.pm=NULL
-output_TrainSetAll.pm=NULL
-output_TestSetAll.pm = NULL
-output_Votes.pmAll=NULL
-tunedAll.pm=NULL
-output_varIMPtotal.pm = NULL
-fit_error_rate.pm = c()
-accuracies.pm = c()
-#fit.pm <- vector("list", n_samps)
-#conf.mat.pm = matrix(0, nrow = 2, ncol = 2)
+#output_EncounterClass.pn=NULL
+output_Results.pn=NULL
+output_TrainSetAll.pn=NULL
+output_TestSetAll.pn = NULL
+output_Votes.pnAll=NULL
+tunedAll.pn=NULL
+output_varIMPtotal.pn = NULL
+fit_error_rate.pn = c()
+accuracies.pn = c()
+#fit.pn <- vector("list", n_samps)
+#conf.mat.pn = matrix(0, nrow = 2, ncol = 2)
 # names.test=NULL
 # names.train=NULL
 #output_IndDWAll=NULL
@@ -237,39 +237,39 @@ for(rep in 1:n_samps){
   # Total groups included
   #This randomly samples 'nrep' groups from each population
   N_pel = as.numeric(sample(PEL, nrep*npel))
-  N_mhi  = as.numeric(sample(MHI, nrep*nmhi))
+  N_nwhi  = as.numeric(sample(NWHI, nrep*nnwhi))
   #N_nwhi  = as.numeric(sample(NWHI, nrep*nnwhi))
  
   
   # Test data 
   #Randomly sample 1 group out of the selected groups for each population to be included in the test dataset later
   test_pel= as.integer(sample(N_pel, ntest))
-  test_mhi= as.integer(sample(N_mhi, ntest))
+  test_nwhi= as.integer(sample(N_nwhi, ntest))
 
   
   #Combines test groups into single vector
-  N_test = rbind(test_pel, test_mhi)
+  N_test = rbind(test_pel, test_nwhi)
   
-  all.pm = NULL
-  for(i in c(N_pel,N_mhi)){
-    sub=droplevels(subset(pcdata.pm, pcdata.pm$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+  all.pn = NULL
+  for(i in c(N_pel,N_nwhi)){
+    sub=droplevels(subset(pcdata.pn, pcdata.pn$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
     samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
-    all.pm <-rbind(all.pm, samp)
+    all.pn <-rbind(all.pn, samp)
     
     }
   #Correlation Step####
-pcsub.pm<-all.pm[,7:53]
+pcsub.pn<-all.pn[,7:53]
 #corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
-tmp.pm <- cor(pcsub.pm)
-tmp.pm[upper.tri(tmp.pm)] <- 0
-diag(tmp.pm) <- 0
-pcsubcor.pm <- pcsub.pm[,!apply(tmp.pm,2,function(x) any(x > 0.80 | x < -0.80))]
+tmp.pn <- cor(pcsub.pn)
+tmp.pn[upper.tri(tmp.pn)] <- 0
+diag(tmp.pn) <- 0
+pcsubcor.pn <- pcsub.pn[,!apply(tmp.pn,2,function(x) any(x > 0.80 | x < -0.80))]
 
-all.pm <- cbind(all.pm[, c(1:6)], pcsubcor.pm)
+all.pn <- cbind(all.pn[, c(1:6)], pcsubcor.pn)
   
 
-test.pm<-droplevels(subset(all.pm, group%in%N_test ))
-train.pm<-droplevels(subset(all.pm, !(group%in%N_test)))
+test.pn<-droplevels(subset(all.pn, group%in%N_test ))
+train.pn<-droplevels(subset(all.pn, !(group%in%N_test)))
 
 
 #### Tuning parameters ####
@@ -289,23 +289,23 @@ registerDoParallel(cl, cores = detectCores())
 #### Formula ####
 # for the RF model with 'population' as the response and time-frequency measurements 
 
-formPc.pm <- as.formula(paste("population ~ ", paste(names(all.pm)[7:length(all.pm)],collapse="+")))
+formPc.pn <- as.formula(paste("population ~ ", paste(names(all.pn)[7:length(all.pn)],collapse="+")))
 
 
 ## TOP 5 UNCORRELATED VARIABLES
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:11],collapse="+")))
+#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pn)[7:11],collapse="+")))
 
 ## CORRELATED VARIABLES
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
+#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pn)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
 ##The foreach function is the loop function for parallel processing. 
 ##It uses %dopar% which partitions the loop among your cores, then combines each output using the .combine argument. 
 
-x.pm = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
+x.pn = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
     library(randomForest)
-    do_RF = randomForest(formPc.pm, data = train.pm, test = test.pm, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])#, nodesize = tune_settings$nodesize[i])
+    do_RF = randomForest(formPc.pn, data = train.pn, test = test.pn, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])#, nodesize = tune_settings$nodesize[i])
     print(do_RF$err.rate[tune_settings$ntree[i],])
   }
 
@@ -322,110 +322,110 @@ stopCluster(cl)
 
 ## Combine settings and results ####
 
-tune_settings.pm = cbind(tune_settings, x.pm)
+tune_settings.pn = cbind(tune_settings, x.pn)
 
 
 ## Optimal Settings: the settings combo
 ## that has the lowest OOB rate
 
-tuned.pm<-tune_settings.pm[which.min(tune_settings.pm$OOB),]
-tunedAll.pm <- rbind(tunedAll.pm, tuned.pm)
+tuned.pn<-tune_settings.pn[which.min(tune_settings.pn$OOB),]
+tunedAll.pn <- rbind(tunedAll.pn, tuned.pn)
 
 #### Run Random Forest ####
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-  fit.pm <- randomForest(formPc.pm, data=train.pm, ntree=tuned.pm[1,2], importance=TRUE, replace=T, mtry=tuned.pm[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
+  fit.pn <- randomForest(formPc.pn, data=train.pn, ntree=tuned.pn[1,2], importance=TRUE, replace=T, mtry=tuned.pn[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
 #Save mean error rate for each model (added 7/20/18)
-fit_error_rate.pm = c(fit_error_rate.pm, fit.pm$err.rate)
+fit_error_rate.pn = c(fit_error_rate.pn, fit.pn$err.rate)
 
 
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
-  prediction.pm <-predict(fit.pm, newdata=test.pm, predict.all = F, type='response', nodes = T) 
-  prediction.vote <-predict(fit.pm, newdata=test.pm, predict.all = T, type='vote')
+  prediction.pn <-predict(fit.pn, newdata=test.pn, predict.all = F, type='response', nodes = T) 
+  prediction.vote <-predict(fit.pn, newdata=test.pn, predict.all = T, type='vote')
 
    #shows T/F for individual whistles and whether they were classified correctly  
-   test.pm$rightPred <- as.character(prediction.pm) == as.character(test.pm$population) 
+   test.pn$rightPred <- as.character(prediction.pn) == as.character(test.pn$population) 
   
    #sums all 'TRUE' and divides by total
-   accuracy.pm <- sum((test.pm$rightPred)/nrow(test.pm)) 
-   accuracies.pm <- c(accuracies.pm, accuracy.pm)
+   accuracy.pn <- sum((test.pn$rightPred)/nrow(test.pn)) 
+   accuracies.pn <- c(accuracies.pn, accuracy.pn)
   ####RESULTS!!!#####  
-  results.pmtemp <- table(test.pm$population, prediction.pm)  # conf matrix of individual whistle counts
+  results.pntemp <- table(test.pn$population, prediction.pn)  # conf matrix of individual whistle counts
   
 ## Get percentages of whistles correctly and incorrectly classified   
   #calculate % accuracies of diagonal by population from confusion matrix of percentages
-pel.pel<-round((results.pmtemp[1,1])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2) #pelagic
-mhi.mhi<-round((results.pmtemp[2,2])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) #mhi 
+pel.pel<-round((results.pntemp[1,1])/(results.pntemp[1,1]+results.pntemp[1,2])*100,2) #pelagic
+nwhi.nwhi<-round((results.pntemp[2,2])/(results.pntemp[2,1]+results.pntemp[2,2])*100,2) #nwhi 
   #calculate misclassification for pelagic
-pel.mhi<-round((results.pmtemp[1,2])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2)
-mhi.pel<-round((results.pmtemp[2,1])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) 
+pel.nwhi<-round((results.pntemp[1,2])/(results.pntemp[1,1]+results.pntemp[1,2])*100,2)
+nwhi.pel<-round((results.pntemp[2,1])/(results.pntemp[2,1]+results.pntemp[2,2])*100,2) 
   
 
 #Consolidate back into confusion matrix
-pel.row<-c(pel.pel, pel.mhi)
+pel.row<-c(pel.pel, pel.nwhi)
 #nwhi.row<-c(nwhi.pel, nwhi.nwhi, nwhi.mhi)
-mhi.row<-c(mhi.pel, mhi.mhi)
-#class.title<-c('pelagic', 'mhi')
-conf.mat.pm <- rbind(pel.row, mhi.row) #(% of whistles)
-#conf.mat.pm = conf.mat.pm + conf.mat.pmtemp
-#conf.mat.pm<-data.frame(rbind("Pelagic"=pel.row, "MHI"=mhi.row))
+nwhi.row<-c(nwhi.pel, nwhi.nwhi)
+#class.title<-c('pelagic', 'nwhi')
+conf.mat.pn <- rbind(pel.row, nwhi.row) #(% of whistles)
+#conf.mat.pn = conf.mat.pn + conf.mat.pntemp
+#conf.mat.pn<-data.frame(rbind("Pelagic"=pel.row, "MHI"=mhi.row))
 
 
-colnames(conf.mat.pm)=c("Pelagic", "MHI")
-#conf.mat.pm
+colnames(conf.mat.pn)=c("Pelagic", "NWHI")
+#conf.mat.pn
 
 true.pel = if(pel.pel>=60) 'Pelagic' else 'Ambiguous'
 #true.nwhi = if(nwhi.nwhi>50) 'NWHI' else 'Ambiguous'
-true.mhi = if(mhi.mhi>=60) 'MHI' else 'Ambiguous'
-true.enc = data.frame(rbind(pel.pel, mhi.mhi))
+true.nwhi = if(nwhi.nwhi>=60) 'NWHI' else 'Ambiguous'
+true.enc = data.frame(rbind(pel.pel, nwhi.nwhi))
 #d = as.data.frame(unique(test$EncounterID))
 #d = as.data.frame(d[c(1:3), ])
-e.pm=c()
-e.pm=as.data.frame(rbind(true.pel, true.mhi))
-e.pm=cbind(e.pm, true.enc)
-colnames(e.pm) = c("EncounterClass", "PctCorrect") #, "EncounterID")
+e.pn=c()
+e.pn=as.data.frame(rbind(true.pel, true.nwhi))
+e.pn=cbind(e.pn, true.enc)
+colnames(e.pn) = c("EncounterClass", "PctCorrect") #, "EncounterID")
 
 #Summed results confusion matrix after each iteration
-results.pm = results.pm + results.pmtemp 
+results.pn = results.pn + results.pntemp 
 
 #For calculating means and standard dev for EACH ITERATION of confusion matrix
 #For a single iteration, stores separate cells of class results for calculating mean and standard error
 #YOU NEED THIS STEP 4/26/18, TRUST ME!
-realP.pm <- c(realP.pm,results.pmtemp[1,1])
-#fakeP <- c(fakeP,results.pmtemp[1,2])
-realM.pm <- c(realM.pm,results.pmtemp[2,2])
-#fakeM <- c(fakeM,results.pmtemp[2,1])
+realP.pn <- c(realP.pn,results.pntemp[1,1])
+#fakeP <- c(fakeP,results.pntemp[1,2])
+realM.pn <- c(realM.pn,results.pntemp[2,2])
+#fakeM <- c(fakeM,results.pntemp[2,1])
         
 #### OUTPUTS ####
 #1.
 #Save each RF model's confusion matrix and OOB error
-output_ModelFit.pm <- rbind(output_ModelFit.pm, as.table(fit.pm$confusion), mean(fit.pm$err.rate))
+output_ModelFit.pn <- rbind(output_ModelFit.pn, as.table(fit.pn$confusion), mean(fit.pn$err.rate))
 
 #2.
 #Most comprehensive information about overall predictions, proportional classification of trees, and tree predictions for each whistle
-g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm,as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual)))
+g.pn=cbind(rep, "EncounterID"= test.pn$EncounterID, "EncounterCount"=test.pn$EncounterCount, "Prediction"=test.pn$rightPred, "PredictedPop"=prediction.pn,as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual)))
 
-output_WhistleClass.pm <- smartbind(output_WhistleClass.pm, g.pm, fill = NA, sep=':')
+output_WhistleClass.pn <- smartbind(output_WhistleClass.pn, g.pn, fill = NA, sep=':')
 
 #3.
 #table keeping track of confusion matrices for all iterations
-output_Results.pm<-rbind(output_Results.pm, rep, results.pmtemp, accuracy.pm=signif(accuracy.pm, digits = 3)) 
+output_Results.pn<-rbind(output_Results.pn, rep, results.pntemp, accuracy.pn=signif(accuracy.pn, digits = 3)) 
 
 #4.
 #Output of encounters used in each training set  
-output_TrainSet.pm <- data.frame(rep, "EncounterID" = sort(unique(train.pm$EncounterID))) #, "encounter" = sort(unique(train$group)))
-output_TrainSetAll.pm <-rbind(output_TrainSetAll.pm, output_TrainSet.pm)
+output_TrainSet.pn <- data.frame(rep, "EncounterID" = sort(unique(train.pn$EncounterID))) #, "encounter" = sort(unique(train$group)))
+output_TrainSetAll.pn <-rbind(output_TrainSetAll.pn, output_TrainSet.pn)
 
 #5.
 #Output shows encounters in each test set, encounter prediction, and % correctly classified
-output_TestSet.pm <- data.frame(rep, "EncounterID" = sort(unique(test.pm$EncounterID)), e.pm) #, "encounter" = sort(unique(train$group)))
-output_TestSetAll.pm <-rbind(output_TestSetAll.pm, output_TestSet.pm)
+output_TestSet.pn <- data.frame(rep, "EncounterID" = sort(unique(test.pn$EncounterID)), e.pn) #, "encounter" = sort(unique(train$group)))
+output_TestSetAll.pn <-rbind(output_TestSetAll.pn, output_TestSet.pn)
 
 #6.
   # Important Variables
-  varIMPtemp.pm <- as.data.frame(importance(fit.pm))
-  varIMP.pm <- varIMPtemp.pm[order(varIMPtemp.pm$MeanDecreaseGini), , drop =F]
-  output_varIMPtotal.pm <- rbind(output_varIMPtotal.pm, "REP"=rep, varIMP.pm)
+  varIMPtemp.pn <- as.data.frame(importance(fit.pn))
+  varIMP.pn <- varIMPtemp.pn[order(varIMPtemp.pn$MeanDecreaseGini), , drop =F]
+  output_varIMPtotal.pn <- rbind(output_varIMPtotal.pn, "REP"=rep, varIMP.pn)
 
 
 
@@ -433,10 +433,10 @@ output_TestSetAll.pm <-rbind(output_TestSetAll.pm, output_TestSet.pm)
 
 #7.
 #Overall correct classification scores
-correctP.pm <- round((results.pm[1,1]/(results.pm[1,1]+results.pm[1,2])*100), 2)
-correctM.pm <- round((results.pm[2,2]/(results.pm[2,1]+results.pm[2,2])*100), 2)
+correctP.pn <- round((results.pn[1,1]/(results.pn[1,1]+results.pn[1,2])*100), 2)
+correctM.pn <- round((results.pn[2,2]/(results.pn[2,1]+results.pn[2,2])*100), 2)
 
-output_CorrectClass.pm <- rbind(results.pm,cbind(correctP.pm, correctM.pm))
+output_CorrectClass.pn <- rbind(results.pn,cbind(correctP.pn, correctM.pn))
 
 
 
@@ -449,23 +449,23 @@ proc.time() - ptm
 ```{r}
 se <- function(x) sd(x)/sqrt(length(x))
 
-meanRealP.pm <- mean(realP.pm)
-meanRealM.pm <- mean(realM.pm)
-seRealP.pm <- se(realP.pm)
-seRealM.pm <- se(realM.pm)
+meanRealP.pn <- mean(realP.pn)
+meanRealM.pn <- mean(realM.pn)
+seRealP.pn <- se(realP.pn)
+seRealM.pn <- se(realM.pn)
 
  
 date='20180822'
 #Combine means and std errors into matrix
 sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
-PNMmeans.pm <- cbind("PEL"= c(meanRealP.pm), "MHI"=c(meanRealM.pm)) #means
-PNMse.pm <- cbind("PEL"= c(seRealP.pm), "MHI"=c(seRealM.pm)) #standard errors
-PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
+PNMmeans.pn <- cbind("PEL"= c(meanRealP.pn), "NWHI"=c(meanRealM.pn)) #means
+PNMse.pn <- cbind("PEL"= c(seRealP.pn), "NWHI"=c(seRealM.pn)) #standard errors
+PNMtotal.pn <- rbind("Means" = PNMmeans.pn, "Stand Err" = PNMse.pn)
 
 date
 w
 n_samps
-PNMtotal.pm
+PNMtotal.pn
 sink()
 
 
@@ -475,19 +475,19 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PM_20180822.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PM_20180822.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PM_20180822.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PM_20180822.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PM_20180822.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PM_20180822.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll.pn, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PM_20180822.csv", append = T, col.names=T, sep = ",")
 
 ```
 
@@ -505,14 +505,14 @@ seRealM <- se(realM)
 date='20180822'
 #Combine means and std errors into matrix
 sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPM_means_20180822.txt", append=T)
-PNMmeans.pm <- cbind("PEL"= c(meanRealP), "MHI"=c(meanRealM)) #means
-PNMse.pm <- cbind("PEL"= c(seRealP), "MHI"=c(seRealM)) #standard errors
-PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
+PNMmeans.pn <- cbind("PEL"= c(meanRealP), "NWHI"=c(meanRealM)) #means
+PNMse.pn <- cbind("PEL"= c(seRealP), "NWHI"=c(seRealM)) #standard errors
+PNMtotal.pn <- rbind("Means" = PNMmeans.pn, "Stand Err" = PNMse.pn)
 
 date
 w
 n_samps
-PNMtotal.pm
+PNMtotal.pn
 sink()
 
 
@@ -523,17 +523,17 @@ sink()
 #Save overall confusion matrix
 write.table(output_CorrectClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///PcResults_ConfusionMatrix_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalResults_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalResults_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalWhistleClass_PM_20180818.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalWhistleClass_PM_20180818.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///Top5ImpVar_PcResults_TrainSets_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///Top5ImpVar_PcResults_TrainSets_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_TestResults_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_TestResults_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_ImportantVars_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_ImportantVars_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_TunedParameters_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll.pn, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//Top5ImpVar_PcResults_TunedParameters_newPvM_NoPel8.csv", append = T, col.names=T, sep = ",")
 
 ```
 
@@ -545,16 +545,16 @@ write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//res
 #After all forests are fit, take the cumulative confusion matrix and run some stats
 
 #Calculates overall results for each iteration, summing up all individual whistle classifications
-# pel.diag<-round((results.pm[1,1])/(results.pm[1,1]+results.pm[1,2])*100,2) #pelagic
-# mhi.diag<-round((results.pm[2,2])/(results.pm[2,1]+results.pm[2,2])*100,2) #mhi
+# pel.diag<-round((results.pn[1,1])/(results.pn[1,1]+results.pn[1,2])*100,2) #pelagic
+# mhi.diag<-round((results.pn[2,2])/(results.pn[2,1]+results.pn[2,2])*100,2) #mhi
 # #calculate misclassification for pelagic and mhi
-# pel.mis<-round((results.pm[1,2])/(results.pm[1,1]+results.pm[1,2])*100,2)
-# mhi.mis<-round((results.pm[2,1])/(results.pm[2,1]+results.pm[2,2])*100,2)
+# pel.mis<-round((results.pn[1,2])/(results.pn[1,1]+results.pn[1,2])*100,2)
+# mhi.mis<-round((results.pn[2,1])/(results.pn[2,1]+results.pn[2,2])*100,2)
 # 
 # pel.tot<-c(pel.diag, pel.mis)
 # mhi.tot<-c(mhi.mis, mhi.diag)
-# Conf.Mat.pm <- rbind(pel.tot, mhi.tot)
-# colnames(Conf.Mat.pm)=c("Pelagic", "MHI")
+# Conf.Mat.pn <- rbind(pel.tot, mhi.tot)
+# colnames(Conf.Mat.pn)=c("Pelagic", "MHI")
 
 #Takes mean and standard dev of cumulative whistles correctly and incorrectly classified
 
@@ -598,10 +598,10 @@ write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//res
 ##Testing HARP data with new whistles
 ```{r warning=FALSE, message=FALSE}
 
-train.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
-train.pm <- droplevels(filter(train.pm, population == 'mhi' | population == 'pel'))
+train.pn<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+train.pn <- droplevels(filter(train.pn, population == 'mhi' | population == 'pel'))
 
-test.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA harp only.csv')
+test.pn<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA harp only.csv')
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -629,23 +629,23 @@ ptm<-proc.time()
 
 
 #### Start ####
-results.pm = matrix(0, nrow = 1, ncol = 2)
+results.pn = matrix(0, nrow = 1, ncol = 2)
 realP = c()
 fakeP = c()
 realM = c()
 fakeM = c()
-output_WhistleClass.pm =NULL
-output_EncounterClass.pm=NULL
-output_RawResults.pm=NULL
-output_TrainSet.pmAll=NULL
-output_TestSet.pmAll = NULL
-output_Votes.pmAll=NULL
-tuned.pmAll=NULL
-varIMPtotal.pm = NULL
+output_WhistleClass.pn =NULL
+output_EncounterClass.pn=NULL
+output_RawResults.pn=NULL
+output_TrainSet.pnAll=NULL
+output_TestSet.pnAll = NULL
+output_Votes.pnAll=NULL
+tuned.pnAll=NULL
+varIMPtotal.pn = NULL
 
 
-#fit.pm <- vector("list", n_samps)
-#conf.mat.pm = matrix(0, nrow = 2, ncol = 2)
+#fit.pn <- vector("list", n_samps)
+#conf.mat.pn = matrix(0, nrow = 2, ncol = 2)
 # names.test=NULL
 # names.train=NULL
 #output_IndDWAll=NULL
@@ -673,14 +673,14 @@ varIMPtotal.pm = NULL
 #   
 #   all = NULL
 #   for(i in c(N_pel,N_mhi)){
-#     sub=droplevels(subset(pcdata.pm, pcdata.pm$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+#     sub=droplevels(subset(pcdata.pn, pcdata.pn$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
 #     samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
 #     all <-rbind(all, samp)
 #     
 #     }
 #   
-#   test.pm<-droplevels(subset(all, group%in%N_test ))
-#   train.pm<-droplevels(subset(all, !(group%in%N_test)))
+#   test.pn<-droplevels(subset(all, group%in%N_test ))
+#   train.pn<-droplevels(subset(all, !(group%in%N_test)))
   #print(unique(train$EncounterID))
   #print(unique(test$EncounterID))
   
@@ -714,10 +714,10 @@ registerDoParallel(cl, cores = detectCores())
 # for the RF model with 'population' as the response and time-frequency measurements 
 
 ## UNCORRELATED VARIABLES
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
+#formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pn)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pn)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
@@ -726,7 +726,7 @@ formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collaps
 
 x = foreach(i = 1:nrow(tune_settings), .combine = rbind) %dopar% { 
     library(randomForest)
-    do_RF = randomForest(formPc, data = train.pm, test = test.pm, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])#, nodesize = tune_settings$nodesize[i])
+    do_RF = randomForest(formPc, data = train.pn, test = test.pn, ntree = tune_settings$ntree[i], mtry = tune_settings$mtry[i])#, nodesize = tune_settings$nodesize[i])
     print(do_RF$err.rate[tune_settings$ntree[i],])
   }
 
@@ -749,53 +749,53 @@ tune_settings = cbind(tune_settings, x)
 ## Optimal Settings: the settings combo
 ## that has the lowest OOB rate
 
-tuned.pm<-tune_settings[which.min(tune_settings$OOB),]
-tuned.pmAll <- rbind(tuned.pmAll, tuned.pm)
+tuned.pn<-tune_settings[which.min(tune_settings$OOB),]
+tuned.pnAll <- rbind(tuned.pnAll, tuned.pn)
 
 #### Run Random Forest ####
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-  fit.pm <- randomForest(formPc, data=train.pm, ntree=tuned.pm[1,2], importance=TRUE, replace=T, mtry=tuned.pm[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
+  fit.pn <- randomForest(formPc, data=train.pn, ntree=tuned.pn[1,2], importance=TRUE, replace=T, mtry=tuned.pn[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
-  prediction.pm <-predict(fit.pm, newdata=test.pm, predict.all = F, type='response', nodes = T) 
-  prediction.vote <-predict(fit.pm, newdata=test.pm, predict.all = T, type='vote')
+  prediction.pn <-predict(fit.pn, newdata=test.pn, predict.all = F, type='response', nodes = T) 
+  prediction.vote <-predict(fit.pn, newdata=test.pn, predict.all = T, type='vote')
 
    #shows T/F for individual whistles and whether they were classified correctly  
-   test.pm$rightPred <- as.character(prediction.pm) == as.character(test.pm$population) 
+   test.pn$rightPred <- as.character(prediction.pn) == as.character(test.pn$population) 
   
    #sums all 'TRUE' and divides by total
-   accuracy.pm <- sum((test.pm$rightPred)/nrow(test.pm)) 
+   accuracy.pn <- sum((test.pn$rightPred)/nrow(test.pn)) 
   
 #### Accuracy for each EncounterID in test set####  
-   encID = unique(test.pm$EncounterID)
-   accID.pm = NULL
+   encID = unique(test.pn$EncounterID)
+   accID.pn = NULL
    encCLASS = NULL
    for (id in encID) {
-     subID <- subset(test.pm, EncounterID == id)
-     accID.pmTemp <- sum((subID$rightPred)/nrow(subID)) 
-     encCLASStemp = if(accID.pmTemp>=.60) 'MHI' else 'Ambiguous'
+     subID <- subset(test.pn, EncounterID == id)
+     accID.pnTemp <- sum((subID$rightPred)/nrow(subID)) 
+     encCLASStemp = if(accID.pnTemp>=.60) 'MHI' else 'Ambiguous'
      encCLASS = rbind.data.frame(encCLASS, encCLASStemp)
-     accID.pm <- rbind.data.frame(accID.pm, accID.pmTemp)
+     accID.pn <- rbind.data.frame(accID.pn, accID.pnTemp)
      
    }
-   accID.pmALL <- as.data.frame(cbind(rep, encID, accID.pm,  encCLASS))
-   colnames(accID.pmALL) = c("Rep", "EncounterID", "Accuracy", "Class")
+   accID.pnALL <- as.data.frame(cbind(rep, encID, accID.pn,  encCLASS))
+   colnames(accID.pnALL) = c("Rep", "EncounterID", "Accuracy", "Class")
    
   ####RESULTS!!!#####  
-  results.pmtemp <- table(test.pm$population, prediction.pm)  # conf matrix of individual whistle classification
+  results.pntemp <- table(test.pn$population, prediction.pn)  # conf matrix of individual whistle classification
   
   #calculate % accuracies of diagonal by population from confusion matrix of percentages
-#pel.pel<-round((results.pmtemp[1,1])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2) #pelagic
-mhi.mhi<-round((results.pmtemp[1,1])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2) #mhi 
+#pel.pel<-round((results.pntemp[1,1])/(results.pntemp[1,1]+results.pntemp[1,2])*100,2) #pelagic
+mhi.mhi<-round((results.pntemp[1,1])/(results.pntemp[1,1]+results.pntemp[1,2])*100,2) #mhi 
   #calculate misclassification for pelagic
-# pel.mhi<-round((results.pmtemp[1,2])/(results.pmtemp[1,1]+results.pmtemp[1,2])*100,2)
-# mhi.pel<-round((results.pmtemp[2,1])/(results.pmtemp[2,1]+results.pmtemp[2,2])*100,2) 
+# pel.mhi<-round((results.pntemp[1,2])/(results.pntemp[1,1]+results.pntemp[1,2])*100,2)
+# mhi.pel<-round((results.pntemp[2,1])/(results.pntemp[2,1]+results.pntemp[2,2])*100,2) 
   
 
   # Important Variables
-  varIMPtemp.pm <- as.data.frame(importance(fit.pm))
-  varIMP.pm <- varIMPtemp.pm[order(varIMPtemp.pm$MeanDecreaseGini), , drop =F]
-  varIMPtotal.pm <- rbind(varIMPtotal.pm, "REP"=rep, varIMP.pm)
+  varIMPtemp.pn <- as.data.frame(importance(fit.pn))
+  varIMP.pn <- varIMPtemp.pn[order(varIMPtemp.pn$MeanDecreaseGini), , drop =F]
+  varIMPtotal.pn <- rbind(varIMPtotal.pn, "REP"=rep, varIMP.pn)
 
   
    
@@ -803,10 +803,10 @@ mhi.mhi<-round((results.pmtemp[1,1])/(results.pmtemp[1,1]+results.pmtemp[1,2])*1
 #se=function(x) sd(x)/sqrt(length(x))
 #for a single iteration, stores separate cells of results for calculating mean and standard error
 se <- function(x) sd(x)/sqrt(length(x))
-# realP <- c(realP,results.pmtemp[1,1])
-# fakeP <- c(fakeP,results.pmtemp[1,2])
-realM <- c(realM,results.pmtemp[1,2])
-fakeM <- c(fakeM,results.pmtemp[1,2])
+# realP <- c(realP,results.pntemp[1,1])
+# fakeP <- c(fakeP,results.pntemp[1,2])
+realM <- c(realM,results.pntemp[1,2])
+fakeM <- c(fakeM,results.pntemp[1,2])
 
 
 #Consolidate back into confusion matrix
@@ -814,13 +814,13 @@ fakeM <- c(fakeM,results.pmtemp[1,2])
 # #nwhi.row<-c(nwhi.pel, nwhi.nwhi, nwhi.mhi)
 # mhi.row<-c(mhi.pel, mhi.mhi)
 # #class.title<-c('pelagic', 'mhi')
-# conf.mat.pm <- rbind(pel.row, mhi.row)
-# #conf.mat.pm = conf.mat.pm + conf.mat.pmtemp
-# #conf.mat.pm<-data.frame(rbind("Pelagic"=pel.row, "MHI"=mhi.row))
+# conf.mat.pn <- rbind(pel.row, mhi.row)
+# #conf.mat.pn = conf.mat.pn + conf.mat.pntemp
+# #conf.mat.pn<-data.frame(rbind("Pelagic"=pel.row, "MHI"=mhi.row))
 # 
 # 
-# colnames(conf.mat.pm)=c("Pelagic", "MHI")
-#conf.mat.pm
+# colnames(conf.mat.pn)=c("Pelagic", "MHI")
+#conf.mat.pn
 
 #true.pel = if(pel.pel>60) 'Pelagic' else 'Ambiguous'
 #true.nwhi = if(nwhi.nwhi>50) 'NWHI' else 'Ambiguous'
@@ -828,33 +828,33 @@ true.mhi = if(mhi.mhi>60) 'MHI' else 'Ambiguous'
 true.enc = data.frame(mhi.mhi)
 #d = as.data.frame(unique(test$EncounterID))
 #d = as.data.frame(d[c(1:3), ])
-e.pm=c()
-e.pm=as.data.frame(true.mhi)
-e.pm=cbind(e.pm, true.enc)
-colnames(e.pm) = c("EncounterClass", "% Correct") #, "EncounterID")
+e.pn=c()
+e.pn=as.data.frame(true.mhi)
+e.pn=cbind(e.pn, true.enc)
+colnames(e.pn) = c("EncounterClass", "% Correct") #, "EncounterID")
 
 #Summed results confusion matrix after each iteration
-results.pm = results.pm + results.pmtemp 
+results.pn = results.pn + results.pntemp 
 
 
         
 #### OUTPUTS ####
 # BIG dataframe with RF results for each encounter, including the % of votes, individ tree votes
-g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
+g.pn=cbind(rep, "EncounterID"= test.pn$EncounterID, "EncounterCount"=test.pn$EncounterCount, "Prediction"=test.pn$rightPred, "PredictedPop"=prediction.pn, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
 
-output_WhistleClass.pm <- smartbind(output_WhistleClass.pm, g.pm)
+output_WhistleClass.pn <- smartbind(output_WhistleClass.pn, g.pn)
 
-output_EncounterClass.pm <- rbind(output_EncounterClass.pm, e.pm)
+output_EncounterClass.pn <- rbind(output_EncounterClass.pn, e.pn)
 
-output_RawResults.pm<-rbind(output_RawResults.pm, rep, results.pm, accuracy.pm=signif(accuracy.pm, digits = 3)) #rough table keeping track of confusion matrices for all iterations
-output_ConfMat.pm<-rbind(output_ConfMat.pm, rep, conf.mat.pm, accuracy.pm=signif(accuracy.pm, digits = 3))
+output_RawResults.pn<-rbind(output_RawResults.pn, rep, results.pn, accuracy.pn=signif(accuracy.pn, digits = 3)) #rough table keeping track of confusion matrices for all iterations
+output_ConfMat.pn<-rbind(output_ConfMat.pn, rep, conf.mat.pn, accuracy.pn=signif(accuracy.pn, digits = 3))
 #df to show encounters used in each training set  
-output_TrainSet.pm <- data.frame(rep, "EncounterID" = sort(unique(train.pm$EncounterID))) #, "encounter" = sort(unique(train$group)))
-output_TrainSet.pmAll <-rbind(output_TrainSet.pmAll, output_TrainSet.pm)
+output_TrainSet.pn <- data.frame(rep, "EncounterID" = sort(unique(train.pn$EncounterID))) #, "encounter" = sort(unique(train$group)))
+output_TrainSet.pnAll <-rbind(output_TrainSet.pnAll, output_TrainSet.pn)
 
 #df to show encounters used in each test set
-output_TestSet.pm <- data.frame(rep, "EncounterID" = sort(unique(test.pm$EncounterID)), e.pm) #, "encounter" = sort(unique(train$group)))
-output_TestSet.pmAll <-rbind(output_TestSet.pmAll, output_TestSet.pm)
+output_TestSet.pn <- data.frame(rep, "EncounterID" = sort(unique(test.pn$EncounterID)), e.pn) #, "encounter" = sort(unique(train$group)))
+output_TestSet.pnAll <-rbind(output_TestSet.pnAll, output_TestSet.pn)
 
 #df to show the prediction of each individual whistle per encounter (THIS IS DOCUMENTED IN 'g')
 # output_IndDW<-data.frame(rep, "EncounterID"=test$EncounterID, "PredictedPop"=prediction, "EncounterCount"=test$EncounterCount) 
@@ -864,16 +864,16 @@ output_TestSet.pmAll <-rbind(output_TestSet.pmAll, output_TestSet.pm)
 
 
 #Calculates overall results for each iteration, summing up all whistle classifications
-pel.diag<-round((results.pm[1,1])/(results.pm[1,1]+results.pm[1,2])*100,2) #pelagic
-mhi.diag<-round((results.pm[2,2])/(results.pm[2,1]+results.pm[2,2])*100,2) #mhi
+pel.diag<-round((results.pn[1,1])/(results.pn[1,1]+results.pn[1,2])*100,2) #pelagic
+mhi.diag<-round((results.pn[2,2])/(results.pn[2,1]+results.pn[2,2])*100,2) #mhi
 #calculate misclassification for pelagic and mhi
-pel.mis<-round((results.pm[1,2])/(results.pm[1,1]+results.pm[1,2])*100,2)
-mhi.mis<-round((results.pm[2,1])/(results.pm[2,1]+results.pm[2,2])*100,2)
+pel.mis<-round((results.pn[1,2])/(results.pn[1,1]+results.pn[1,2])*100,2)
+mhi.mis<-round((results.pn[2,1])/(results.pn[2,1]+results.pn[2,2])*100,2)
 
 pel.tot<-c(pel.diag, pel.mis)
 mhi.tot<-c(mhi.mis, mhi.diag)
-Conf.Mat.pm <- rbind(pel.tot, mhi.tot)
-colnames(Conf.Mat.pm)=c("Pelagic", "MHI")
+Conf.Mat.pn <- rbind(pel.tot, mhi.tot)
+colnames(Conf.Mat.pn)=c("Pelagic", "MHI")
 
 
 meanRealP <- mean(realP)
