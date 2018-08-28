@@ -598,10 +598,10 @@ write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//res
 ##Testing HARP data with new whistles
 ```{r warning=FALSE, message=FALSE}
 
-train.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+train.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 train.pm <- droplevels(filter(train.pm, population == 'mhi' | population == 'pel'))
 
-test.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA harp only.csv')
+test.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Data_ProbNotUsing/pc_fostex.csv')
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -615,20 +615,20 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 45              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2        #Zack: number of times you want to resample from your dataset
+n_samps = 1         # number of times you want to resample from your dataset
 
 
 ```
 
 
-#Classify HARP data only
+#Classify HARP or FOSTEX data only
 Meat of the Analysis
 ```{r message=FALSE, warning=FALSE}
 
 ptm<-proc.time() 
 
 
-#### Start ####
+#### Start Fostex or HARP ####
 results.pm = matrix(0, nrow = 1, ncol = 2)
 realP = c()
 fakeP = c()
@@ -697,7 +697,7 @@ varIMPtotal.pm = NULL
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 mtry_vals = 5:10 
-ntree_vals = seq(501,3001,50) #from, to, by
+ntree_vals = seq(501,5001,500) #from, to, by
 #node_vals=1:3
 
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)#, nodesize = node_vals)
@@ -717,7 +717,7 @@ registerDoParallel(cl, cores = detectCores())
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(train.pm)[7:53],collapse="+"))) #Use variables to classify to population
 
 
 
