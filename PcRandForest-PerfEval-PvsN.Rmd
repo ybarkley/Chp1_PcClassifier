@@ -434,7 +434,7 @@ output_TestSetAll.pn <-rbind(output_TestSetAll.pn, output_TestSet.pn)
 #7.
 #Overall correct classification scores
 correctP.pn <- round((results.pn[1,1]/(results.pn[1,1]+results.pn[1,2])*100), 2)
-correctM.pn <- round((results.pn[2,2]/(results.pn[2,1]+results.pn[2,2])*100), 2)
+correctN.pn <- round((results.pn[2,2]/(results.pn[2,1]+results.pn[2,2])*100), 2)
 
 output_CorrectClass.pn <- rbind(results.pn,cbind(correctP.pn, correctM.pn))
 

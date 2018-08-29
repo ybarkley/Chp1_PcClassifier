@@ -13,6 +13,8 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 ```{r warning=FALSE, message=FALSE}
+#Load Libraries####
+
 library(sqldf)
 library(randomForest)
 library(partykit)
@@ -26,6 +28,7 @@ library(dplyr)
 #library(ROCR)
 library(Hmisc)
 library(tree)
+library(plyr)
 
 ```
 
@@ -402,7 +405,7 @@ output_ModelFit <- rbind(output_ModelFit, as.table(fit$confusion), mean(fit$err.
 #Save results for each individual whistle, including overall predictions based on majority vote of forest and individual tree predictions
 g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
 
-output_WhistleClass <- smartbind(output_WhistleClass, g, fill = NA, sep=':')
+output_WhistleClass <- bind_rows(output_WhistleClass, g, fill = NA, sep=':')
 
 #3.
 #table keeping track of individual confusion matrices for all iterations
