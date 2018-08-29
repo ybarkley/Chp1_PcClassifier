@@ -52,8 +52,8 @@ npel  = 1           # number of pelagic schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2        #Zack: number of times you want to resample from your dataset
-prop = 0.5          #proportion of whistles in training data
+n_samps = 100        #Zack: number of times you want to resample from your dataset
+prop = 0.7          #proportion of whistles in training data
 ```
 
 
@@ -286,7 +286,29 @@ proc.time()-ptm
 
 
 ```{r}
-write.table(results.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/TotallyRandom_20180824.csv', sep=",", append=TRUE)
+
+write.table(conf.mat.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_TotesRandom_20180825.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_Results.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_TotesRandom_20180825.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_WhistleClass.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_TotesRandom_20180825.csv", append = T, row.names = F, col.names=T, sep = ",")
+
+write.table(output_TrainSetAll.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_TotesRandom_20180825.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_TestSetAll.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_TotesRandom_20180825.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_varIMPtotal.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_TotesRandom_20180825.csv", append = T, col.names=T, sep = ",")
+
+write.table(tunedAll.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_TotesRandom_20180825.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_ModelFit.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_TotesRandom_20180825.csv", append = T, col.names=F, sep = ",")
+
+#raw results table
+write.table(results.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/TotesRandom_20180825.csv', sep=",", append=TRUE)
+
+
+
+
 ```
 
 #enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations

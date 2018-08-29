@@ -14,8 +14,6 @@ This script creates random forests using whistle datasets (either old or new dat
 
  Load your libraries
 ```{r warning=FALSE, message=FALSE}
-
-#Load Libraries####
 library(sqldf)
 library(randomForest)
 library(partykit)
@@ -29,7 +27,6 @@ library(dplyr)
 #library(ROCR)
 library(Hmisc)
 library(tree)
-
 ```
 
 
@@ -171,9 +168,9 @@ tmp <- lapply(p, plot)
 #Set up encounters for RF using new or old whistle data
 ```{r}
 #all whistles for pel and mhi only
-pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+#pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
-#pcdata.pm <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+pcdata.pm <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #try using only top 5 important variables
 #pcdata.pm <- pcdata.pm[, c(1:6, 8, 12:15)]
@@ -181,16 +178,16 @@ pcdata.pm <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
 #NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = c(31:33)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+MHI = c(31:34)    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
 
-nrep  = 3           # multiplier for total number of groups
+nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 10         #number of times you want to resample from your dataset
+n_samps = 100         #number of times you want to resample from your dataset
 
 
 ```
@@ -210,13 +207,13 @@ realP.pm = c()
 realM.pm = c()
 #use this format of output_WhistleClass on desktop (R version 3.3.1)
 output_WhistleClass = NULL
-#use this format of output_WhistleClass on laptop (R version 3.5.1) 
-output_WhistleClass = data.frame(Doubles=double(),
-                 Ints=integer(),
-                 Factors=factor(),
-                 Logicals=logical(),
-                 Characters=character(),
-                 stringsAsFactors=FALSE)
+#use this format of output_WhistleClass on laptop (R version 3.5.1)
+# output_WhistleClass = data.frame(Doubles=double(),
+#                  Ints=integer(),
+#                  Factors=factor(),
+#                  Logicals=logical(),
+#                  Characters=character(),
+#                  stringsAsFactors=FALSE)
 output_EncounterClass.pm=NULL
 output_Results.pm=NULL
 output_TrainSetAll.pm=NULL
@@ -408,7 +405,7 @@ output_ModelFit.pm <- rbind(output_ModelFit.pm, as.table(fit.pm$confusion), mean
 #Most comprehensive information about overall predictions, proportional classification of trees, and tree predictions for each whistle
 g.pm=cbind(rep, "EncounterID"= test.pm$EncounterID, "EncounterCount"=test.pm$EncounterCount, "Prediction"=test.pm$rightPred, "PredictedPop"=prediction.pm,as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual)))
 
-output_WhistleClass.pm <- bind_rows(list(output_WhistleClass.pm, g.pm), .id = 'id')
+output_WhistleClass.pm <- smartbind(output_WhistleClass.pm, g.pm, fill = NA, sep=':')
 
 #3.
 #table keeping track of confusion matrices for all iterations
@@ -477,6 +474,8 @@ sink()
 #save to desktop OneDrive
 ```{r}
 
+
+
 #Save overall confusion matrix
 write.table(output_CorrectClass.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PM_20180822.csv", append = T, row.names = T, col.names=T, sep = ",")
 
@@ -491,6 +490,8 @@ write.table(output_TestSetAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\da
 write.table(output_varIMPtotal.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PM_20180822.csv", append = T, col.names=T, sep = ",")
 
 write.table(tunedAll.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PM_20180822.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_ModelFit.pm, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PM_20180824.csv", append = T, col.names=F, sep = ",")
 
 ```
 
@@ -524,7 +525,7 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///PcResults_ConfusionMatrix_PM_20180827_noMHI34.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM///PcResults_ConfusionMatrix_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 write.table(output_Results.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//results//20180818//PM//PcResults_TotalResults_PM_20180818.csv", append = T, row.names = T, col.names=T, sep = ",")
 
@@ -601,10 +602,10 @@ write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//res
 ##Testing HARP data with new whistles
 ```{r warning=FALSE, message=FALSE}
 
-train.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+train.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
 train.pm <- droplevels(filter(train.pm, population == 'mhi' | population == 'pel'))
 
-test.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Data_ProbNotUsing/pc_fostex.csv')
+test.pm<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA harp only.csv')
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -618,20 +619,20 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 45              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 1         # number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 
 
 ```
 
 
-#Classify HARP or FOSTEX data only
+#Classify HARP data only
 Meat of the Analysis
 ```{r message=FALSE, warning=FALSE}
 
 ptm<-proc.time() 
 
 
-#### Start Fostex or HARP ####
+#### Start ####
 results.pm = matrix(0, nrow = 1, ncol = 2)
 realP = c()
 fakeP = c()
@@ -700,7 +701,7 @@ varIMPtotal.pm = NULL
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 mtry_vals = 5:10 
-ntree_vals = seq(501,5001,500) #from, to, by
+ntree_vals = seq(501,3001,50) #from, to, by
 #node_vals=1:3
 
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)#, nodesize = node_vals)
@@ -720,7 +721,7 @@ registerDoParallel(cl, cores = detectCores())
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[5:30],collapse="+")))
 
 ## CORRELATED VARIABLES
-formPc <- as.formula(paste("population ~ ", paste(names(train.pm)[7:53],collapse="+"))) #Use variables to classify to population
+formPc <- as.formula(paste("population ~ ", paste(names(pcdata.pm)[7:54],collapse="+"))) #Use variables to classify to population
 
 
 
