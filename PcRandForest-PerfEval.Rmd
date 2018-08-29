@@ -402,7 +402,7 @@ output_ModelFit <- rbind(output_ModelFit, as.table(fit$confusion), mean(fit$err.
 #Save results for each individual whistle, including overall predictions based on majority vote of forest and individual tree predictions
 g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
 
-output_WhistleClass <- smartbind(output_WhistleClass, g, fill = NA, sep=':')
+output_WhistleClass <- bind_rows(list(output_WhistleClass, g), .id ="id")
 
 #3.
 #table keeping track of individual confusion matrices for all iterations
