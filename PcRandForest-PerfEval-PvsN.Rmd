@@ -377,12 +377,12 @@ colnames(conf.mat.pn)=c("Pelagic", "NWHI")
 true.pel = if(pel.pel>=60) 'Pelagic' else 'Ambiguous'
 #true.nwhi = if(nwhi.nwhi>50) 'NWHI' else 'Ambiguous'
 true.nwhi = if(nwhi.nwhi>=60) 'NWHI' else 'Ambiguous'
-true.enc = data.frame(rbind(pel.pel, nwhi.nwhi))
+true.enc.pn = data.frame(rbind(pel.pel, nwhi.nwhi))
 #d = as.data.frame(unique(test$EncounterID))
 #d = as.data.frame(d[c(1:3), ])
 e.pn=c()
 e.pn=as.data.frame(rbind(true.pel, true.nwhi))
-e.pn=cbind(e.pn, true.enc)
+e.pn=cbind(e.pn, true.enc.pn)
 colnames(e.pn) = c("EncounterClass", "PctCorrect") #, "EncounterID")
 
 #Summed results confusion matrix after each iteration

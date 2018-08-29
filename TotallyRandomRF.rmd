@@ -28,6 +28,7 @@ library(devtools)
 library(dplyr)
 library(data.table)
 library(ggplot2)
+library(gtools)
 
 
 ```
@@ -183,14 +184,60 @@ results.enctemp <- table(test.enc$EncounterID, prediction.enc)
 
 results.enc <- results.enc + results.enctemp  
 
+
+pel.nwhi.enctemp = sum(results.enctemp[1,2],results.enctemp[2,2],results.enctemp[3,2],results.enctemp[4,2])
+pel.mhi.enctemp =  sum(results.enctemp[1,3],results.enctemp[2,3],results.enctemp[3,3],results.enctemp[4,3])
+
+nwhi.pel.enctemp = sum(results.enctemp[5:8])
+nwhi.mhi.enctemp = sum(results.enctemp[5,3],results.enctemp[6,3],results.enctemp[7,3],results.enctemp[8,3])
+
+mhi.pel.enctemp =  sum(results.enctemp[9:12])
+mhi.nwhi.enctemp = sum(results.enctemp[9,2],results.enctemp[10,2],results.enctemp[11,2],results.enctemp[12,2])
+
+pel.pel.enctemp = round(sum(results.enctemp[1:4])/(sum(results.enctemp[1:4])+pel.nwhi.enctemp+pel.mhi.enctemp)*100,2)
+nwhi.nwhi.enctemp = round(sum(results.enctemp[5,2],results.enctemp[6,2],results.enctemp[7,2],results.enctemp[8,2])/(sum(results.enctemp[5,2],results.enctemp[6,2],results.enctemp[7,2],results.enctemp[8,2])+nwhi.pel.enctemp+nwhi.mhi.enctemp)*100,2)
+mhi.mhi.enctemp = round(sum(results.enctemp[9,3],results.enctemp[10,3],results.enctemp[11,3],results.enctemp[12,3])/(sum(results.enctemp[9,3],results.enctemp[10,3],results.enctemp[11,3],results.enctemp[12,3])+mhi.pel.enctemp+mhi.nwhi.enctemp)*100,2)
+
+
+#Set a threshold for the percentage of whistles that must be correctly classified to classify the population
+true.pel.enc = if(pel.pel.enctemp >= 50) 'Pelagic' else 'Ambiguous'
+true.nwhi.enc = if(nwhi.nwhi.enctemp >= 50) 'NWHI' else 'Ambiguous'
+true.mhi.enc = if(mhi.mhi.enctemp >= 50) 'MHI' else 'Ambiguous'
+
+true.enc.enc = data.frame(rbind(pel.pel.enctemp, nwhi.nwhi.enctemp,mhi.mhi.enctemp))
+
+e.enc=c()
+e.enc=as.data.frame(rbind(true.pel.enc, true.nwhi.enc, true.mhi.enc))
+e.enc=cbind(e.enc, true.enc.enc)
+colnames(e.enc) = c("EncounterClass", "Pct Correct") 
+
+
+
+
 #### OUTPUTS ####
 
 #1.
 output_ModelFit.enc <- rbind(output_ModelFit.enc, as.table(fit.enc$confusion), mean(fit.enc$err.rate))
 
+#2.
+#Save results for each individual whistle, including overall predictions based on majority vote of forest and individual tree predictions
+g.enc=cbind(rep, "EncounterID"= test.enc$EncounterID, "EncounterCount"=test.enc$EncounterCount, "Prediction"=test.enc$rightPred, "PredictedPop"=prediction.enc, as.data.frame(cbind(prediction_vote.enc$aggregate, prediction_vote.enc$individual))) 
 
+output_WhistleClass.enc <- smartbind(output_WhistleClass.enc, g.enc, fill = NA, sep=':')
 
+#3.
+#table keeping track of individual confusion matrices for all iterations
+output_Results.enc<-rbind(output_Results.enc, rep, results.enctemp, accuracy=signif(accuracy.enc, digits = 3)) 
 
+#4.
+#df to show encounters used in each training set  
+output_TrainSetAll.enc <- data.frame(rep, "EncounterID" = sort(unique(train.enc$EncounterID))) #, "encounter" = sort(unique(train$group)))
+output_TrainSetAll.enc <-rbind(output_TrainSetAll.enc, output_TrainSetAll.enc)
+
+#5.
+#df to show encounters used in each test set
+output_TestSet.enc <- data.frame(rep, "EncounterID" = unique(test.enc$EncounterID), e.enc) #, "encounter" = sort(unique(train$group)))
+output_TestSetAll.enc <-rbind(output_TestSetAll.enc, output_TestSet.enc)
 
 
 #6.
@@ -201,7 +248,7 @@ output_ModelFit.enc <- rbind(output_ModelFit.enc, as.table(fit.enc$confusion), m
 
 }
 
-#Manipulate results.enc
+#Manipulate results.enc, every 4 rows represents a different true population
 pel.pel.enc = sum(results.enc[1:4])
 pel.nwhi.enc = sum(results.enc[1,2],results.enc[2,2],results.enc[3,2],results.enc[4,2])
 pel.mhi.enc = sum(results.enc[1,3],results.enc[2,3],results.enc[3,3],results.enc[4,3])
