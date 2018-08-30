@@ -12,7 +12,7 @@ This script creates random forests using whistle datasets (either old or new dat
 
 
 
- Load your libraries
+# Load your libraries
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
@@ -335,8 +335,6 @@ tunedAll.pm <- rbind(tunedAll.pm, tuned.pm)
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
   fit.pm <- randomForest(formPc.pm, data=train.pm, ntree=tuned.pm[1,2], importance=TRUE, replace=T, mtry=tuned.pm[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
-#Save mean error rate for each model (added 7/20/18)
-fit_error_rate.pm = c(fit_error_rate.pm, fit.pm$err.rate)
 
 
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
