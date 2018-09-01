@@ -14,23 +14,26 @@ library(dplyr)
 #Import PcResults_TestResults csv for the classifier
 agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PMN_100x/PcResults_TestResults_PMN_20180824.csv')
 
+agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PN_100x/PcResults_TestResults_PN_20180824.csv')
+
+agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180822_PM_100x/PcResults_TestResults_PM_20180822.csv')
 
 #1. How many times was each acoustic encounter represented in the test data?
 AcEncs_Test <- aggregate(x = agg_data, 
                                by = list(unique.values = agg_data$EncounterID), 
                                FUN = length)
 #Same result as using 'aggregate'
-count(agg_data$EncounterID)
+#count(agg_data$EncounterID) #func 'count' from plyr package conflicts with dplyr
 
 #2. How many times were the populations classified correctly using a threshold of >=50%?
-count(agg_data$EncounterClass)
+#count(agg_data$EncounterClass)
 # 1 Ambiguous  222
 # 2       MHI   58
 # 3      NWHI    8
 # 4   Pelagic   12
 
 #Get frequencies for every value and every variable in df
-lapply(agg_data, count)
+#lapply(agg_data, count)
 
 
 ### THIS WORKS!! ####
@@ -40,7 +43,7 @@ filtByEnc = NULL
 filtCorrect = NULL
 for (k in 1:length(IDs)){
   temp <- agg_data[agg_data$EncounterID==IDs[k], ]
-  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$Pct.Correct >= 50)) 
+  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$PctCorrect >= 60)) #change to 50 for PNM model, and Pct.Correct
   filtCorrect = rbind(filtCorrect, correct)
   filtByEnc = rbind(filtByEnc, temp)
 }
@@ -50,15 +53,15 @@ filtCorrect <- filtCorrect[order(as.character(filtCorrect$EncounterID)),]
 
 #What is the number of correctly classified encounters based on the number of times the acoustic encounter was included in the test data?
 #Combine filtered correct data with tally of times ac enc was included in the test data
-agg_data_sum <- cbind(filtCorrect, "y" = AcEncs_Test$X)
+agg_data_sum <- cbind(filtCorrect, "y" = AcEncs_Test$rep)
 
 #Divide columns to get proportional data and add that into a third column
-library(dplyr)
+#library(dplyr)
 agg_data_sum <- mutate(agg_data_sum, new = x/y)
 
 
-write.csv(agg_data_sum,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_AggregatedTestResults_20180830.csv', row.names = F )
-
+write.csv(agg_data_sum,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_AggregatedTestResults_PM_20180830.csv', row.names = F )
+write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
 #If needed
 #Get frequencies for every value and every variable in df
 lapply(agg_data, count)
@@ -68,6 +71,8 @@ lapply(agg_data, count)
 
 
 ```
+
+
 
 Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
 

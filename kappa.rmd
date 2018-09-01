@@ -1,0 +1,61 @@
+---
+title: "Calculate Kappa"
+output: html_notebook
+---
+
+
+
+Kappa calculations
+```{r}
+#Use the pairwise confusion matrices
+library(caret)
+
+#Create dataframe that will be changed later
+#https://stats.stackexchange.com/questions/124001/what-is-the-intuition-behind-the-kappa-statistical-value-in-classification#124019
+results.pm <- data.frame(pel = rep(LETTERS[1:2], each=10), mhi = rep(sample(LETTERS[1:2], 20, replace=T)))
+pm.results <- table(results.pm)
+
+#Change values of table to actual results from saved data on ONEDRIVE
+pm.results[1,1] <- 8648
+pm.results[1,2] <- 6352
+pm.results[2,1] <- 5059
+pm.results[2,2] <- 9941
+
+#for PvsN
+pm.results[1,1] <- 8509
+pm.results[1,2] <- 6491
+pm.results[2,1] <- 6619
+pm.results[2,2] <- 8381
+
+pm.cmat <- confusionMatrix(pm.results)
+
+
+#The following is adapted from Titus et al 1984
+#Proportion accurate
+Pa = pm.cmat$overall[['Accuracy']] #double [[]] to get just the number instead of named number
+
+
+#Proportion expected
+Pe = pm.cmat$byClass[['Detection Prevalence']]
+
+#Total number of events (whistles classified)
+N = sum(pm.results)
+
+#standard error of Kappa
+stdERR <- sqrt((Pa*(1-Pa))/(N*(1-Pe)^2))
+
+#Confidence intercals for Kappa
+CI_low <- pm.cmat$overall[['Kappa']]-stdERR
+CI_upper <- pm.cmat$overall[['Kappa']]+stdERR
+
+#Approximate standard error of Kappa / Standard deviation
+SEk <- sqrt(Pe/(N*(1-Pe))) 
+
+pm.cmat$overall[['Kappa']]/SEk
+
+
+z.test()
+
+
+```
+

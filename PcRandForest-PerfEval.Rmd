@@ -387,7 +387,7 @@ true.enc = data.frame(rbind(pel.pel, nwhi.nwhi, mhi.mhi))
 e=c()
 e=as.data.frame(rbind(true.pel, true.nwhi, true.mhi))
 e=cbind(e, true.enc)
-colnames(e) = c("EncounterClass", "Pct Correct") #, "EncounterID")
+colnames(e) = c("EncounterClass", "PctCorrect") #, "EncounterID")
 
 #f=as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))
 
