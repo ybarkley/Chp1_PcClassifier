@@ -1,0 +1,156 @@
+
+#Kruskal-Wallis Tests
+```{r}
+#pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
+pcdata.PM <- droplevels(filter(pcdata, population == "mhi" | population == "pel"))
+pcdata.PN <- droplevels(filter(pcdata, population == "pel" | population == "nwhi"))
+
+```
+
+
+```{r}
+#https://stackoverflow.com/questions/21271449/how-to-apply-the-wilcox-test-to-a-whole-dataframe-in-r
+#This makes a list of all K-W test results for all variables
+pckw <- apply(pcdata[-c(1:6,54:61)],2, kruskal.test,pcdata$population)
+
+#Put column names of variables in a vector
+names <- names(pcdata)[-c(1:6, 54:61)]
+
+#I only want p-values < 0.05
+b <- do.call(rbind, lapply(pckw, function(v){v$p.value})) #pull out only values from list (makes matrix)
+
+b2 <-cbind(names, as.data.frame(b, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2)<-c("variable", "p.value")  #success!
+
+b2signif <- filter(b2, b2$p.value <= 0.05)
+
+#For Pelagic and NWHI
+pckw.PN <- apply(pcdata.PN[-c(1:6,54:61)],2, kruskal.test,pcdata.PN$population)
+b.PN <- do.call(rbind, lapply(pckw.PN, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.PN <-cbind(names, as.data.frame(b.PN, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.PN)<-c("variable", "p.value")  #success!
+
+b2signif.PN <- filter(b2.PN, b2.PN$p.value <= 0.05)
+namesPN <- colnames(b2signif.PN)
+
+#For Pelagic and MHI  
+pckw.PM <- apply(pcdata.PM[-c(1:6,54:61)],2, kruskal.test,pcdata.PM$population)
+b.PM <- do.call(rbind, lapply(pckw.PM, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.PM <-cbind(names, as.data.frame(b.PM, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.PM)<-c("variable", "p.value")  #success!
+
+b2signif.PM <- filter(b2.PM, b2.PM$p.value <= 0.05)
+namesPM <- colnames(b2signif.PM)
+
+
+
+
+
+```
+
+```{r}
+#Create dataframes with only variables that match the significant variables from the KW tests
+
+#vector of variable names
+PNMvars <- b2signif[,1]
+idx <- match(PNMvars, names(pcdata))  
+newPNMdf <- cbind(pcdata[,c(1:6)], pcdata[, idx])
+
+#For Pelagic and NWHI
+PNvars <- b2signif[,1]
+idx <- match(PNvars, names(pcdata.PN))  
+newPNdf <- cbind(pcdata.PN[,c(1:6)], pcdata.PN[, idx])
+
+#for Pelagic and MHI
+PMvars <- b2signif[,1]
+idx <- match(PMvars, names(pcdata.PM))  
+newPMdf <- cbind(pcdata.PM[,c(1:6)], pcdata.PM[, idx])
+
+
+write.csv(newPNMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PNM.csv', row.names = F)
+write.csv(newPNdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PN.csv', row.names = F)
+write.csv(newPMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PM.csv', row.names = F)
+
+```
+
+
+
+```{r}
+#### FREQPOSSLOPEMEAN ####
+#MHI-NWHI-Pelagic
+kruskal.test(FREQPOSSLOPEMEAN~population, pcdata)
+
+#MHI-NWHI
+kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.PN)
+```
+
+```{r}
+#### FREQQUARTER3 ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(FREQQUARTER3~population, pcdata)
+
+#MHI-NWHI
+kruskal.test(FREQQUARTER3~population, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(FREQQUARTER3~population, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(FREQQUARTER3~population, pcdata.PN)
+```
+
+
+```{r}
+#### FREQNEGSLOPEMEAN ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata)
+
+#MHI-NWHI
+kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.PN)
+```
+
+```{r}
+#### FREQSWEEPFLATPERCENT ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata)
+
+#MHI-NWHI
+kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.PN)
+```
+
+```{r}
+#### DURATION ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(population ~ DURATION, pcdata)
+
+#MHI-NWHI
+kruskal.test(population ~ DURATION, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(population ~ DURATION, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(population ~ DURATION, pcdata.PN)
+```
