@@ -5,6 +5,11 @@
 pcdata.PM <- droplevels(filter(pcdata, population == "mhi" | population == "pel"))
 pcdata.PN <- droplevels(filter(pcdata, population == "pel" | population == "nwhi"))
 
+
+pcdata.P <- droplevels(filter(pcdata, population == "pel"))      
+pcdata.N <- droplevels(filter(pcdata, population == "nwhi"))      
+pcdata.M <- droplevels(filter(pcdata, population == "mhi"))
+
 ```
 
 
@@ -74,20 +79,42 @@ write.csv(newPMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 
 ```
 
 
-
+#Kruskal Wallis tests for important variables - MHI population
 ```{r}
-#### FREQPOSSLOPEMEAN ####
-#MHI-NWHI-Pelagic
-kruskal.test(FREQPOSSLOPEMEAN~population, pcdata)
+#MHI
+pckw.M <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
 
-#MHI-NWHI
-kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.MN)
+b.M <- do.call(rbind, lapply(pckw.M, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.M <-cbind(names, as.data.frame(b.M, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.M)<-c("variable", "p.value")  #success!
 
-#MHI-Pelagic
-kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.MP)
+b2signif.M <- filter(b2.M, b2.M$p.value <= 0.05)
+namesM <- colnames(b2signif.M)
 
-#Pelagic-NWHI
-kruskal.test(FREQPOSSLOPEMEAN~population, pcdata.PN)
+
+#Pelagic
+pckw.P <- apply(pcdata.P[-c(1:6,54:61)],2, kruskal.test,pcdata.P$EncounterID)
+
+b.P <- do.call(rbind, lapply(pckw.P, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.P <-cbind(names, as.data.frame(b.P, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.P)<-c("variable", "p.value")  #success!
+
+b2signif.P <- filter(b2.P, b2.P$p.value <= 0.05)
+namesP <- colnames(b2signif.P)
+
+
+#NWHI
+pckw.N <- apply(pcdata.N[-c(1:6,54:61)],2, kruskal.test,pcdata.N$EncounterID)
+
+b.N <- do.call(rbind, lapply(pckw.N, function(v){v$p.value})) #pull out only p-values from list (makes matrix)
+b2.N <-cbind(names, as.data.frame(b.N, row.names = T)) #create dataframe of all pvalues from matrix
+colnames(b2.N)<-c("variable", "p.value")  #success!
+
+b2signif.N <- filter(b2.N, b2.N$p.value <= 0.05)
+namesN <- colnames(b2signif.N)
+
+
+
 ```
 
 ```{r}
@@ -108,35 +135,12 @@ kruskal.test(FREQQUARTER3~population, pcdata.PN)
 
 
 ```{r}
-#### FREQNEGSLOPEMEAN ####
 
-#MHI-NWHI-Pelagic
-kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata)
-
-#MHI-NWHI
-kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.MN)
-
-#MHI-Pelagic
-kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.MP)
-
-#Pelagic-NWHI
-kruskal.test(population ~ FREQNEGSLOPEMEAN, pcdata.PN)
 ```
 
 ```{r}
-#### FREQSWEEPFLATPERCENT ####
 
-#MHI-NWHI-Pelagic
-kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata)
 
-#MHI-NWHI
-kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.MN)
-
-#MHI-Pelagic
-kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.MP)
-
-#Pelagic-NWHI
-kruskal.test(population ~ FREQSWEEPFLATPERCENT, pcdata.PN)
 ```
 
 ```{r}
