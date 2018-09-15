@@ -1,58 +1,63 @@
 
 #Kruskal-Wallis Tests
 ```{r}
-#pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
+pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+
+pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
 pcdata.PM <- droplevels(filter(pcdata, population == "mhi" | population == "pel"))
 pcdata.PN <- droplevels(filter(pcdata, population == "pel" | population == "nwhi"))
 
 
-pcdata.P <- droplevels(filter(pcdata, population == "pel"))      
-pcdata.N <- droplevels(filter(pcdata, population == "nwhi"))      
-pcdata.M <- droplevels(filter(pcdata, population == "mhi"))
+pcdata.P <- droplevels(filter(pcdata, population == "Pelagic"))      
+pcdata.N <- droplevels(filter(pcdata, population == "NWHI"))      
+pcdata.M <- droplevels(filter(pcdata, population == "MHI"))
 
 ```
 
-
+##KW test WITHIN populations 
+###May-Collado and Wartzok 2008
 ```{r}
 #https://stackoverflow.com/questions/21271449/how-to-apply-the-wilcox-test-to-a-whole-dataframe-in-r
-#This makes a list of all K-W test results for all variables
-pckw <- apply(pcdata[-c(1:6,54:61)],2, kruskal.test,pcdata$population)
 
+##FOR PELAGIC ENCOUNTERS
 #Put column names of variables in a vector
-names <- names(pcdata)[-c(1:6, 54:61)]
+names <- names(pcdata.P)[-c(1:6, 54:61)]
+
+#This makes a list of all K-W test results for all variables
+kwP <- apply(pcdata.P[-c(1:6,54:61)],2, function(x) kruskal.test(x,pcdata.P$EncounterID))#, p.value = 0.0009))
 
 #I only want p-values < 0.05
-b <- do.call(rbind, lapply(pckw, function(v){v$p.value})) #pull out only values from list (makes matrix)
+kwP_pval <- do.call(rbind, lapply(KW_P, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
 
-b2 <-cbind(names, as.data.frame(b, row.names = T)) #create dataframe of pvalues from matrix
-colnames(b2)<-c("variable", "p.value")  #success!
-
-b2signif <- filter(b2, b2$p.value <= 0.05)
-
-#For Pelagic and NWHI
-pckw.PN <- apply(pcdata.PN[-c(1:6,54:61)],2, kruskal.test,pcdata.PN$population)
-b.PN <- do.call(rbind, lapply(pckw.PN, function(v){v$p.value})) #pull out only values from list (makes matrix)
-b2.PN <-cbind(names, as.data.frame(b.PN, row.names = T)) #create dataframe of pvalues from matrix
-colnames(b2.PN)<-c("variable", "p.value")  #success!
-
-b2signif.PN <- filter(b2.PN, b2.PN$p.value <= 0.05)
-namesPN <- colnames(b2signif.PN)
-
-#For Pelagic and MHI  
-pckw.PM <- apply(pcdata.PM[-c(1:6,54:61)],2, kruskal.test,pcdata.PM$population)
-b.PM <- do.call(rbind, lapply(pckw.PM, function(v){v$p.value})) #pull out only values from list (makes matrix)
-b2.PM <-cbind(names, as.data.frame(b.PM, row.names = T)) #create dataframe of pvalues from matrix
-colnames(b2.PM)<-c("variable", "p.value")  #success!
-
-b2signif.PM <- filter(b2.PM, b2.PM$p.value <= 0.05)
-namesPM <- colnames(b2signif.PM)
+kwP_pvaldf <-cbind(names, as.data.frame(kwP_pval, row.names = T)) #create dataframe of pvalues from matrix
+colnames(kwP_pvaldf)<-c("variable", "p.value")  #success!
+kwP_signif <- filter(kwP_pvaldf, kwP_pvaldf$p.value <= 0.05) #filter out only variables with pvalues <= 0.05
+namesP <- colnames(kwP_signif)
 
 
+#FOR NWHI ENCOUNTERS
+kwN <- apply(pcdata.N[-c(1:6,54:61)],2, kruskal.test,pcdata.N$EncounterID)
+kwN_pval <- do.call(rbind, lapply(kwN, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
+kwN_x2 <- do.call(rbind, lapply(kwN, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+kwN_df <- do.call(rbind, lapply(kwN, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+kwN_pvaldf <- as.data.frame(cbind(names, kwN_x2, kwN_df, kwN_pval), row.names = F) #create dataframe of pvalues from matrix
+colnames(kwN_pvaldf)<-c("variable", "chi-squared", "df", "p.value")  #success!
 
+kwN_signif <- filter(kwN_pvaldf, kwN_pvaldf$p.value <= 0.05)  ##!!!why is this now a facort?
+namesN <- colnames(kwN_signif)
+
+#FOR MHI ENCOUNTERS 
+kwM <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
+kwM_pval <- do.call(rbind, lapply(kwM, function(v){v$p.value})) #pull out only values from list (makes matrix)
+kwM_pvaldf <-cbind(names, as.data.frame(kwM_pval, row.names = T)) #create dataframe of pvalues from matrix
+colnames(kwM_pvaldf)<-c("variable", "p.value")  #success!
+
+kwM_signif <- filter(kwM_pvaldf, kwM_pvaldf$p.value <= 0.05)
+namesM <- colnames(kwM_signif)
 
 
 ```
-
+##Subset data for only significant variables
 ```{r}
 #Create dataframes with only variables that match the significant variables from the KW tests
 
@@ -79,7 +84,7 @@ write.csv(newPMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 
 ```
 
 
-#Kruskal Wallis tests for important variables - MHI population
+##Kruskal Wallis tests for important variables - MHI population
 ```{r}
 #MHI
 pckw.M <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
@@ -158,3 +163,21 @@ kruskal.test(population ~ DURATION, pcdata.MP)
 #Pelagic-NWHI
 kruskal.test(population ~ DURATION, pcdata.PN)
 ```
+
+##Pairwise Wilcox Test with Holm method pvalue adjustment
+```{r}
+out <- lapply(7:53, function(x) pairwise.wilcox.test(pcdata[[x]], pcdata$population))
+names(out) <- names(pcdata)[7:53]
+out
+
+#matrix of only pvalues
+sapply(out, function(x) {
+    p <- x$p.value
+    n <- outer(rownames(p), colnames(p), paste, sep='v')
+    p <- as.vector(p)
+    names(p) <- n
+    p
+})
+
+```
+

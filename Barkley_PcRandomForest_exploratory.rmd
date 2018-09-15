@@ -1,6 +1,92 @@
-### Statistical Look at each encounter for each recorder type
+This code plots the distribution of the ROCCA variables for each population to explore the data and know what we're working with for statistical tests.
+
+
+```{r message=FALSE}
+library(dplyr)
+
+pcplot<- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+pcdata.P <- droplevels(filter(pcplot, population == "Pelagic"))      
+pcdata.N <- droplevels(filter(pcplot, population == "NWHI"))      
+pcdata.M <- droplevels(filter(pcplot, population == "MHI"))
+
+#remove columns
+pcplotsub <- pcplot[, -c(2:6, 54:61)]
+pcdata.Msub <- pcdata.M[, -c(2,4:6, 54:61)]
+names<-names(pcdata.Msub)
+names<-names(pcplotsub)
+names<-names[-c(1)]
+```
+
+##Density plots of variables across populations
 ```{r}
-pcplot<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
+### 9/12/2018 ####
+library(ggplot2)
+library(reshape2)
+library(ggpubr)
+
+pcplotsub$population <-factor(pcplot$population, levels=c("Pelagic", 'NWHI', 'MHI'), ordered = T) #reorder population factor
+names<-names(pcplotsub)
+names<-names[-1]
+# #This works below, but plots separate histograms if the data are subsetted for each population beforehand
+# classes<-sapply(pcdata.Msub,class)
+# names[classes == 'numeric']
+# par(mfrow=c(4, 4))
+# for (name in names[classes == 'numeric']){
+#  
+#  p <- hist(pcdata.Msub[,name], main = name)
+#   ggsave 
+# }
+
+
+##Functioning code for Density Plots in multipanels on multiple pages ####
+  #ggplot2 density plots
+plots <- list()
+for(nm in names){
+plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  geom_density(alpha = 0.3) +
+    theme_bw()+
+    theme(plot.background = element_rect(fill = "white"),
+        axis.title.x=element_text(size=10, face='bold'),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8)) +
+        guides(fill=guide_legend(title="Population"))
+#ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
+}
+#arrange plots 
+multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+#export plots to multiple pages
+ggexport(multipage, filename = "multi.page.ggplot2.pdf")
+#another option to plot on multiple pages, but not as good
+plots2 = dlply(pcplot , names, `%+%`, e1 = plots[[nm]])
+ml = marrangeGrob(plots, nrow=4, ncol=2)
+ggsave("multipage.pdf", ml)
+
+
+### By encounter
+#change factor order
+#reverse
+#  pcdata.Msub$population = with(pcdata.Msub, factor(population, levels = rev(levels(population))))
+#custom
+levels(pcdata.Msub$EncounterID) <- c("M1", "M2", "M3", "M4" )
+
+plots.P <- list()
+plots.N <- list()
+plots.M <- list()
+for(nm in names){
+plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.3) +
+    theme_bw()+
+    theme(plot.background = element_rect(fill = "white"),
+        axis.title.x=element_text(size=10, face='bold'),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8)) +
+        guides(fill=guide_legend(title="Population"))
+#ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
+}
+#arrange plots 
+multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+#export plots to multiple pages
+ggexport(multipage, filename = "PcDensityPlot_PelagicVariables.pdf")
+
+
 ```
 
 
@@ -32,6 +118,7 @@ mean(mhi30redo$FREQPOSSLOPEMEAN)
 
 library(lattice)
 ## Mean of the Mean Positive Slope for PELAGIC
+```{r}
 df_pel = droplevels(subset(pcplot, pcplot$population=='pelagic'))
 posslope_pel = mean(df_pel$FREQPOSSLOPEMEAN)
 plot(as.factor(df_pel$group), df_pel$FREQPOSSLOPEMEAN, xlab="Encounter ID", ylab="Mean Positive Slope", main= "Pelagic Population")
@@ -46,9 +133,10 @@ write.csv(list(aggregate(df_pel$FREQPOSSLOPEMEAN, by=list(df_pel$id), FUN=mean))
 aggregate(df_pel$FREQNEGSLOPEMEAN, by=list(df_pel$id), FUN=mean)
 aggregate(df_pel$FREQPOSSLOPEMEAN, by=list(df_pel$Recorder), FUN=median)
 aggregate(df_pel$FREQQUARTER3, by=list(df_pel$id), FUN=mean)
-
+```
 
 ## Mean of the Mean Positive Slope for NWHI
+```{r}
 df_nwhi = droplevels(subset(pcplot, pcplot$population=='nwhi'))
 posslope_nwhi = mean(df_nwhi$FREQPOSSLOPEMEAN)
 plot(as.factor(df_nwhi$group), df_nwhi$FREQPOSSLOPEMEAN, xlab="Encounter ID", ylab="Mean Positive Slope", main="Northwestern Hawaiian Island Population")
@@ -66,9 +154,9 @@ aggregate(df_nwhi$FREQPOSSLOPEMEAN, by=list(df_nwhi$Recorder), FUN=median)
 aggregate(df_nwhi$FREQQUARTER3, by=list(df_nwhi$id), FUN=mean)
 
 
-
-
 plot(as.factor(pcplot$group), pcplot$FREQQUARTER3, col=pcplot$population, xlab="Encounter ID", ylab="Frequency of the third quarter of the whistle")
+```
+
 
 ```{r}
 library(ggplot2)
@@ -224,4 +312,46 @@ ggsave('Plot_AccVSDur.png', width = 11, height = 8, units = "in", type = "cairo-
 mhi29 <- subset(pcplot, pcplot$group == 30)
 
 mhi.only <- subset(pcplot, pcplot$population == 'MHI')
+```
+
+
+
+
+
+
+
+
+```{r}
+
+for (i in colnames) {
+    hist(pcdata.M[,i], xlim=c(0, 12000), breaks=seq(0, 12000, 100), main=colnames[i], probability=TRUE, col="gray", border="white")
+}
+
+#violin plot
+library(vioplot)
+
+colnames <-colnames(pcplot)[4:50]
+
+par(mfrow=c(3,3))
+
+  ggplot(pcplot, aes(x=population, y=FREQMAX)) + geom_violin()
+  ggplot(pcplot, aes(x=population, y=FREQMIN)) + geom_violin()
+
+
+melted = melt(pcplot, id =c("population")) 
+
+ggplot(melted, aes(value)) + facet_grid(~variable) + geom_histogram()+
+  theme(axis.text.x=element_text(size=8), 
+        axis.title.x=element_text(size=8, face='bold'),
+        axis.text.y=element_text(size=8), 
+        axis.title.y=element_text(size=8, face='bold'),
+         text=element_text(size=8),
+        plot.title=element_text(size=12, hjust = 0.5, face = 'bold'),
+        strip.text.x = element_text(size = 5),
+        plot.margin = unit(c(0.5,0.25,0.5,0.25), "cm"))
+
+
+
+
+
 ```

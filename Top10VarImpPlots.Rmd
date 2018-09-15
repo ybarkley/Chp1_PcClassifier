@@ -34,6 +34,8 @@ pcdata <- subset(pcdata, pcdata$population != "nwhi")
 #subset important variables
 pcdata_sub <- pcdata[, c(1,3,7,8,14,15,31)]
 pcdata_sub <- pcdata[, c(1, 3, 22, 30)] #22
+pcdata_sub <- pcdata[, c(1, 3, 7)] #freqmax
+pcdata_sub <- pcdata[, c(1, 3, 24)] #freqcofm
 
 
 
@@ -46,6 +48,11 @@ pcdata_sub %>% group_by(population) %>% summarize(median=median(FREQQUARTER3), s
 
 pcdata_sub %>% group_by(population) %>% summarize(median=median(FREQPOSSLOPEMEAN), sum=sum(FREQPOSSLOPEMEAN))
 
+pcdata_sub %>% group_by(population) %>% summarize(mean=mean(FREQMAX), sum=sum(FREQMAX))
+
+pcdata_sub %>% group_by(population) %>% summarize(mean=mean(FREQCOFM), sum=sum(FREQCOFM))
+pcdata_sub %>% group_by(population) %>% summarize(mean=mean(FREQCOFM), median=median(FREQCOFM))
+
 
 #decimation test
 #pcdata_sub <- pcdata[, c(1,2,29,30)]
@@ -56,6 +63,12 @@ pcdata_sub %>% group_by(population) %>% summarize(median=median(FREQPOSSLOPEMEAN
 #8/26/18
 data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQQUARTER3", "FREQPOSSLOPEMEAN")) 
 data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQPOSSLOPEMEAN"))#"",
+
+#9/10/18
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQMAX"))#"",
+data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQCOFM"))
+
+
 #decimation test
 #data_melt = melt(pcdata_sub, id.vars =c("population", "EncounterID"), measure.vars = c("FREQPOSSLOPEMEAN", "FREQNEGSLOPEMEAN"))
 
@@ -70,6 +83,9 @@ colnames(data_melt_sub)[2] <- "EncounterID" #rename new encounter name col
 data_melt_sub$variable = as.character(data_melt_sub$variable)
 data_melt_sub$variable[data_melt_sub$variable == 'FREQQUARTER3'] = "Third Quarter Frequency"
 data_melt_sub$variable[data_melt_sub$variable == 'FREQPOSSLOPEMEAN'] = "Mean Positive Slope Frequency"
+data_melt_sub$variable[data_melt_sub$variable == 'FREQMAX'] = "Max Frequency"
+
+
 data_melt_sub$variable = as.factor(data_melt_sub$variable)
 
 
@@ -100,8 +116,6 @@ data_melt_sub$EncounterID[data_melt_sub$EncounterID == 'NWHI17'] = "N1"
 data_melt_sub$EncounterID = as.factor(data_melt_sub$EncounterID)
 
 
-
-data_melt_sub$EncounterID = as.factor(data_melt_sub$EncounterID)
 
 
 #change factor order
@@ -150,6 +164,8 @@ ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\Pc
 9/7/2018
 From Term Project in Intro to R, using facet_wrap
 ```{r}
+
+#Plot variables by encounter
 p<-ggplot(data_melt_sub,aes(y=value, x = population)) + 
   facet_wrap(~variable,scales = "free") + 
   geom_boxplot() +
