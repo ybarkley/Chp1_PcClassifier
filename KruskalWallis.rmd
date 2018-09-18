@@ -1,6 +1,8 @@
 
 #Kruskal-Wallis Tests
 ```{r}
+library(dplyr)
+
 pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
 
 pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
@@ -20,19 +22,23 @@ pcdata.M <- droplevels(filter(pcdata, population == "MHI"))
 #https://stackoverflow.com/questions/21271449/how-to-apply-the-wilcox-test-to-a-whole-dataframe-in-r
 
 ##FOR PELAGIC ENCOUNTERS
-#Put column names of variables in a vector
+#Put column names of ROCCA variables in a column vector
 names <- names(pcdata.P)[-c(1:6, 54:61)]
 
 #This makes a list of all K-W test results for all variables
-kwP <- apply(pcdata.P[-c(1:6,54:61)],2, function(x) kruskal.test(x,pcdata.P$EncounterID))#, p.value = 0.0009))
+kwP <- apply(pcdata.P[-c(1:6,54:61)],2, function(x) kruskal.test(x,pcdata.P$EncounterID))
 
-#I only want p-values < 0.05
-kwP_pval <- do.call(rbind, lapply(KW_P, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
-
-kwP_pvaldf <-cbind(names, as.data.frame(kwP_pval, row.names = T)) #create dataframe of pvalues from matrix
-colnames(kwP_pvaldf)<-c("variable", "p.value")  #success!
-kwP_signif <- filter(kwP_pvaldf, kwP_pvaldf$p.value <= 0.05) #filter out only variables with pvalues <= 0.05
-namesP <- colnames(kwP_signif)
+#I only want p-values < 0.05, pull out only pvalues from list (makes matrix)
+kwP_pval <- do.call(rbind, lapply(kwP, function(v){v$p.value})) 
+kwP_x2 <- do.call(rbind, lapply(kwP, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+kwP_df <- do.call(rbind, lapply(kwP, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+kwP_dat <- data.frame(names, kwP_x2, kwP_df, kwP_pval, row.names = NULL) #create dataframe 
+colnames(kwP_dat)<-c("variable", "chi-squared", "df", "p.value")  #success!
+#Add column with population name
+kwP_dat$population <- 'Pelagic'
+#filter out only variables with pvalues <= 0.05
+kwP_signif <- droplevels(filter(kwP_dat, as.numeric(kwP_dat$p.value) <= 0.05) )
+#namesP <- colnames(kwP_signif) #this is used to put new dataframe together later
 
 
 #FOR NWHI ENCOUNTERS
@@ -40,46 +46,64 @@ kwN <- apply(pcdata.N[-c(1:6,54:61)],2, kruskal.test,pcdata.N$EncounterID)
 kwN_pval <- do.call(rbind, lapply(kwN, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
 kwN_x2 <- do.call(rbind, lapply(kwN, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
 kwN_df <- do.call(rbind, lapply(kwN, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
-kwN_pvaldf <- as.data.frame(cbind(names, kwN_x2, kwN_df, kwN_pval), row.names = F) #create dataframe of pvalues from matrix
-colnames(kwN_pvaldf)<-c("variable", "chi-squared", "df", "p.value")  #success!
-
-kwN_signif <- filter(kwN_pvaldf, kwN_pvaldf$p.value <= 0.05)  ##!!!why is this now a facort?
+kwN_dat <- data.frame(names, kwN_x2, kwN_df, kwN_pval, row.names = NULL) #create dataframe of pvalues from matrix
+colnames(kwN_dat)<-c("variable", "chi-squared", "df", "p.value")  #success!
+#Add column with population name
+kwN_dat$population <- 'NWHI'
+kwN_signif <- droplevels(filter(kwN_dat, as.numeric(kwN_dat$p.value) <= 0.05))
 namesN <- colnames(kwN_signif)
 
 #FOR MHI ENCOUNTERS 
 kwM <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
 kwM_pval <- do.call(rbind, lapply(kwM, function(v){v$p.value})) #pull out only values from list (makes matrix)
-kwM_pvaldf <-cbind(names, as.data.frame(kwM_pval, row.names = T)) #create dataframe of pvalues from matrix
-colnames(kwM_pvaldf)<-c("variable", "p.value")  #success!
-
-kwM_signif <- filter(kwM_pvaldf, kwM_pvaldf$p.value <= 0.05)
+kwM_x2 <- do.call(rbind, lapply(kwM, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+kwM_df <- do.call(rbind, lapply(kwM, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+kwM_dat <- data.frame(names, kwM_x2, kwM_df, kwM_pval, row.names = NULL) #create dataframe of pvalues from matrix
+colnames(kwM_dat)<-c("variable", "chi-squared", "df", "p.value")
+#Add column with population name
+kwM_dat$population <- 'MHI'
+kwM_signif <- droplevels(filter(kwM_dat, as.numeric(kwM_dat$p.value) <= 0.05))
 namesM <- colnames(kwM_signif)
+
+
+#Combine KW tests for each population
+kwAll <- rbind(kwP_dat, kwN_dat, kwM_dat)
+kwAll <- kwAll[, c(5, 1:4)]
+#Save all KW test for each population
+write.csv(kwAll, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_KruskalWallis_All.csv')
+
+
+kwAll_signif <- rbind(kwP_signif, kwN_signif, kwM_signif)
+kwAll_signif <- kwAll_signif[, c(5, 1:4)]
+#Save all KW test for each population
+write.csv(kwAll_signif, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_KruskalWallis_AllSignif.csv')
 
 
 ```
 ##Subset data for only significant variables
+
 ```{r}
 #Create dataframes with only variables that match the significant variables from the KW tests
 
-#vector of variable names
-PNMvars <- b2signif[,1]
-idx <- match(PNMvars, names(pcdata))  
-newPNMdf <- cbind(pcdata[,c(1:6)], pcdata[, idx])
+#Within Pelagic
+kwPvars <- kwP_signif[,1]
+idx <- match(kwPvars, names(pcdata.P))  
+kwP_new <- cbind(pcdata.P[,c(1:6)], pcdata.P[, idx])
 
-#For Pelagic and NWHI
-PNvars <- b2signif[,1]
-idx <- match(PNvars, names(pcdata.PN))  
-newPNdf <- cbind(pcdata.PN[,c(1:6)], pcdata.PN[, idx])
+#Within NWHI
+kwNvars <- kwN_signif[,1]
+idx <- match(kwNvars, names(pcdata.P))  
+kwN_new <- cbind(pcdata.P[,c(1:6)], pcdata.P[, idx])
 
-#for Pelagic and MHI
-PMvars <- b2signif[,1]
-idx <- match(PMvars, names(pcdata.PM))  
-newPMdf <- cbind(pcdata.PM[,c(1:6)], pcdata.PM[, idx])
+#Within MHI
+kwMvars <- kwM_signif[,1]
+idx <- match(kwMvars, names(pcdata.P))  
+kwM_new <- cbind(pcdata.P[,c(1:6)], pcdata.P[, idx])
 
 
-write.csv(newPNMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PNM.csv', row.names = F)
-write.csv(newPNdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PN.csv', row.names = F)
-write.csv(newPMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PM.csv', row.names = F)
+write.csv(kwP_new, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_P.csv', row.names = F)
+write.csv(kwN_new, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_N.csv', row.names = F)
+write.csv(kwM_new, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_M.csv', row.names = F)
 
 ```
 
@@ -164,20 +188,99 @@ kruskal.test(population ~ DURATION, pcdata.MP)
 kruskal.test(population ~ DURATION, pcdata.PN)
 ```
 
-##Pairwise Wilcox Test with Holm method pvalue adjustment
+
+## mann-Whitney U test with Bonferroni adjustment of pvalue (NOT using Holm method pvalue adjustment)
 ```{r}
-out <- lapply(7:53, function(x) pairwise.wilcox.test(pcdata[[x]], pcdata$population))
-names(out) <- names(pcdata)[7:53]
+out <- lapply(7:44, function(x) pairwise.wilcox.test(kwP_new[[x]], kwP_new$EncounterID, p.adjust.method = 'bonferroni'))
+names(out) <- names(kwP_new)[7:44]
 out
 
+outtest <- list.group(out, p.value)
+
+
+
+
+u <- list(a=1,b=list(x="a",y="b",z=10))
+list.flatten(u, classes = "character")
+
+
+
+outpval <- do.call(rbind, lapply(out, function(v){v$p.value}))
+
+
+
 #matrix of only pvalues
-sapply(out, function(x) {
+outpval = sapply(out, function(x) {
     p <- x$p.value
     n <- outer(rownames(p), colnames(p), paste, sep='v')
     p <- as.vector(p)
     names(p) <- n
     p
 })
+outpval
+
+write.csv(outpval,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_MannWhitPvals.csv')
+
+```
+
+
+
+##Dunns Test for Multiple Comparisons WITHIN population
+```{r}
+#Reference
+#https://rcompanion.org/rcompanion/d_06.html
+library(FSA)
+library(rcompanion)
+
+pcdata.P_fmax <- pcdata.P[, c(1,3,4,7)]
+
+boxplot(FREQMAX ~ EncounterID,
+        data = pcdata.P_fmax,
+        ylab="Maximum Frequency",
+        xlab="Acoustic Encounter")
+kruskal.test(FREQMAX ~ EncounterID, data = pcdata.P_fmax)
+
+dunnP.bonf <- dunnTest(FREQMAX ~ EncounterID, data = pcdata.P_fmax, method="bonferroni")
+dunnP.bonf
+dunnP <- dunnTest(FREQMAX ~ EncounterID, data = pcdata.P_fmax, method="bh")
+
+dunnP.bonf = dunnP.bonf$res
+write.csv(dunnP.bonf,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_DunnPvals.csv', row.names = F)
+
+
+
+dunnlist <-cldList(comparison = dunnP.bonf$Comparison,
+        p.value = dunnP.bonf$P.adj,
+        threshold = 0.05)
+write.csv(dunnlist,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_DunnTests.csv', row.names = F)
+
+ 
+out.dunn <- lapply(7:44, function(x) dunnTest(kwP_new[[x]], kwP_new$EncounterID, method = 'bonferroni'))
+names(out.dunn) <- names(kwP_new)[7:44]
+####loop through list, save results in separate df?
+
+
+```
+
+## Pairwise Mann-Whitney 
+```{r}
+MannWhitP <- pairwise.wilcox.test(pcdata.P_fmax$FREQMAX, pcdata.P_fmax$EncounterID, p.adjust.methods = "bonferroni")
+MannWhitP
+
+MannWhitP = MannWhitP$p.value
+
+#Convert it to a full table
+MannWhitP1 <- fullPTable(MannWhitP)
+MannWhitP1
+write.csv(MannWhitP1,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_MannWhitTests.csv', row.names = F)
+### Produce compact letter display. 
+### Values sharing a letter ARE NOT significantly different. Groups 'ab' are not significantly different from groups 'a' or 'b'
+library(multcompView)
+multcompLetters(MannWhitP1,
+                compare="<",
+                threshold=0.05,  # p-value to use as significance threshold
+                Letters=letters,
+                reversed = FALSE)
 
 ```
 
