@@ -1,13 +1,21 @@
+---
+title: "Multiple Comparison Tests"
+subtitle: Chapter 1 - Pseudorca Whistle Analysis
+output: html_document
+---
+
+
 
 #Kruskal-Wallis Tests
 ```{r}
 library(dplyr)
+library(data.table)
 
 pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
 
-pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
-pcdata.PM <- droplevels(filter(pcdata, population == "mhi" | population == "pel"))
-pcdata.PN <- droplevels(filter(pcdata, population == "pel" | population == "nwhi"))
+pcdata.MN <- filter(pcdata, population == "MHI" | population == "NWHI")
+pcdata.PM <- droplevels(filter(pcdata, population == "MHI" | population == "Pelagic"))
+pcdata.PN <- droplevels(filter(pcdata, population == "Pelagic" | population == "NWHI"))
 
 
 pcdata.P <- droplevels(filter(pcdata, population == "Pelagic"))      
@@ -15,6 +23,36 @@ pcdata.N <- droplevels(filter(pcdata, population == "NWHI"))
 pcdata.M <- droplevels(filter(pcdata, population == "MHI"))
 
 ```
+
+
+##Normality test (controversial)
+```{r}
+normtest <- apply(pcdata[-c(1:6,54:61)],2, function(x) shapiro.test(x))
+library(broom)
+tidy  (normtest)
+bart_pval <- do.call(rbind, lapply(bart, function(v){v$p.value})) 
+bart_K2 <- do.call(rbind, lapply(bart, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+bart_df <- do.call(rbind, lapply(bart, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+bart_dat <- data.frame(names, bart_K2, bart_df, bart_pval, row.names = NULL)
+```
+
+
+##Bartlett's test to compare variances of populations
+```{r}
+bart <- apply(pcdata[-c(1:6,54:61)],2, function(x) bartlett.test(x,pcdata$population))
+
+bart_pval <- do.call(rbind, lapply(bart, function(v){v$p.value})) 
+bart_K2 <- do.call(rbind, lapply(bart, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+bart_df <- do.call(rbind, lapply(bart, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+bart_dat <- data.frame(names, bart_K2, bart_df, bart_pval, row.names = NULL)
+
+#which variables are >= 0.05 (have similar variance)?
+unique(bart_dat$names[bart_dat$bart_pval >= 0.05])
+
+##variances are similar only for FREQBEGSWEEP    FREQBEGDWN      FREQENDUP       NUMSWEEPSUPFLAT    NUMSWEEPSFLATUP
+
+```
+
 
 ##KW test WITHIN populations 
 ###May-Collado and Wartzok 2008
@@ -117,31 +155,40 @@ write.csv(kwM_new, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 
 library(FSA)
 library(rcompanion)
 
-#Trying a loop to get dunns test for all variables plus the letter list
+#For loop to get dunns test for all variables plus the letter list
+#Not all variables are significantly different for some populations (NWHI & MHI), so comment out the dunn_letters portion to complete the Dunn's Tests for all variables. 
 dunn_VARS <- kwP_new[,7:44] #pelagic
 dunn_VARS <- kwN_new[,7:30] #NWHI
 dunn_VARS <- kwM_new[,7:32] #MHI
 
+
+#If a population has some variables that ARE NOT significantly different, an error in dunn_letters will occur
+#Find all variables with pvalue <= 0.05 and create a new dataframe, dunn_VARS, to check out which pairs of encounters have signif differences.
+idx2 = unique(dunn_resultsALL$variable[dunn_resultsALL$P.adj <= 0.05])
+dunn_VARS <- pcdata.M[, idx]
+
+
 dunn_lettersALL <- NULL
 dunn_resultsALL <-NULL
-
 for (v in colnames(dunn_VARS)){
-  dunn_v <- dunnTest(dunn_VARS[, v] ~ EncounterID, data=kwM_new, method = 'bonferroni')
+  dunn_v <- dunnTest(dunn_VARS[, v] ~ EncounterID, data=kwM_new, method = 'bonferroni') #change data to  match population
+
   dunn_v = dunn_v$res
   dunn_v$variable <- v
   dunn_resultsALL <- rbind(dunn_resultsALL, dunn_v)
-  
-  # dunn_letters <- cldList(comparison = dunn_v$Comparison,
-  #                        p.value = dunn_v$P.adj,
-  #                        threshold = 0.05)
-  # dunn_letters$variable <- v
-  # dunn_lettersALL <- rbind(dunn_lettersALL, dunn_letters)
+
+  dunn_letters <- cldList(comparison = dunn_v$Comparison,
+                         p.value = dunn_v$P.adj,
+                         threshold = 0.05)
+  dunn_letters$variable <- v
+  dunn_lettersALL <- rbind(dunn_lettersALL, dunn_letters)
 
 }
 
-write.csv(dunn_resultsALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_Dunns_mhi.csv', row.names = F)
+write.csv(dunn_resultsALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_Dunns_mhi_signif.csv', row.names = F)
 
-write.csv(dunn_lettersALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_DunnsLetters_pelagic.csv', row.names = F)
+write.csv(dunn_lettersALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_DunnsLetters_mhi.csv', row.names = F)
+
 
 ###########old Dunns code without loop#############
 #testing code using only freq max
@@ -199,6 +246,43 @@ write.csv(dunnMdf,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\K
 
 
 ```
+
+
+##Mann-Whitney U-tests for BETWEEN populations (only comparing 2 at a time)
+```{r}
+
+MannWhit_VARS <- pcdata[, c(7:53)]
+#MannWhit_lettersALL <- NULL
+MannWhit_resultsALL <-NULL
+MannWhit_resultsALL2 <-NULL
+
+for (k in colnames(MannWhit_VARS)){
+  MannWhit_k <- pairwise.wilcox.test(MannWhit_VARS[, k], pcdata.MN$population, data=pcdata, p.adjust.method = 'bonferroni')
+  # MannWhit_v = MannWhit_v$res
+  # MannWhit_v$variable <- v
+  MannWhit_k = MannWhit_k$p.value
+
+#Convert it to a full table
+MannWhit_k <- fullPTable(MannWhit_k)
+  
+MannWhit_k <- cbind(MannWhit_k, k)
+  
+  MannWhit_resultsALL2 <- rbind(MannWhit_resultsALL2, MannWhit_k)
+  
+  # MannWhit_letters <- cldList(comparison = MannWhit_v$Comparison,
+  #                        p.value = MannWhit_v$P.adj,
+  #                        threshold = 0.05)
+  # MannWhit_letters$variable <- v
+  # MannWhit_lettersALL <- rbind(MannWhit_lettersALL, MannWhit_letters)
+
+}
+
+write.csv(MannWhit_resultsALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_MannWhitney_All.csv', row.names = T)
+
+
+```
+
+
 
 ##FREQQUARTER3 kruskal test
 ```{r}
