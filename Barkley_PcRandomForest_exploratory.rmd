@@ -3,6 +3,40 @@ This code plots the distribution of the ROCCA variables for each population to e
 
 ```{r message=FALSE}
 library(dplyr)
+pcplot <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
+
+pcplot$population = as.character(pcplot$population)
+pcplot$population[pcplot$population == 'mhi'] = "MHI"
+pcplot$population[pcplot$population == 'pel'] = "Pelagic"
+pcplot$population[pcplot$population == 'nwhi'] = "NWHI"
+pcplot$population = as.factor(pcplot$population)
+
+pcplot$EncounterID = as.character(pcplot$EncounterID)
+pcplot$EncounterID[pcplot$EncounterID == 'PcMHI31'] = "M2"
+pcplot$EncounterID[pcplot$EncounterID == 'PcMHI32'] = "M3"
+pcplot$EncounterID[pcplot$EncounterID == 'PcMHI33'] = "M4"
+pcplot$EncounterID[pcplot$EncounterID == 'PcMHI34'] = "M1"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL1'] = "P6"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL2'] = "P1"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL3'] = "P2"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL4'] = "P4"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL5'] = "P5"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL6'] = "P3"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL7'] = "P8"
+pcplot$EncounterID[pcplot$EncounterID == 'PcPEL8'] = "P7"
+pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI14'] = "N2"
+pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI15'] = "N3"
+pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI16'] = "N4"
+pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI17'] = "N1"
+pcplot$EncounterID = as.factor(pcplot$EncounterID)
+
+pcplot <- pcplot[, -c(54:61)]
+
+write.csv(pcplot, 'C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv' )
+
+#PIFSC desktop
+pcplot<- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+
 
 pcplot<- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
 pcdata.P <- droplevels(filter(pcplot, population == "Pelagic"))      
@@ -11,6 +45,7 @@ pcdata.M <- droplevels(filter(pcplot, population == "MHI"))
 
 #remove columns
 pcplotsub <- pcplot[, -c(2:6, 54:61)]
+pcplotsub <- pcplot[, -c(2,4:6)]
 pcdata.Msub <- pcdata.M[, -c(2,4:6, 54:61)]
 names<-names(pcdata.Msub)
 names<-names(pcplotsub)

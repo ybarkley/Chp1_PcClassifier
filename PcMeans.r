@@ -1,12 +1,32 @@
-pcdata.pel <- droplevels(subset(pcdata.pm, population == 'pel'))
 
 
-pcdata.mhi <- droplevels(subset(pcdata.pm, population == 'mhi'))
 
 
-means.mhi<-as.data.frame(colMeans(pcdata.mhi[, 7:54]))
-means.pel<-as.data.frame(colMeans(pcdata.pel[, 7:54]))
-means.pm <- cbind("MHI" = means.mhi, "PEL" = means.pel[,1])
+#PIFSC desktop
+pcdata<- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+
+pcdata_sub <- pcdata[, c(1,3,7,13,15,16,21,22,24)]
+
+pcdata.pel <- droplevels(subset(pcdata, population == 'Pelagic'))
+pcdata.nwhi <- droplevels(subset(pcdata, population == 'NWHI'))
+pcdata.mhi <- droplevels(subset(pcdata, population == 'MHI'))
+
+#Calculate means for 7 variables that significantly differed according to Dunn's test
+means <- aggregate(pcdata_sub[,3:9], list(pcdata_sub$population), mean)
+
+# Calculate standard error for 7 variables that significantly differed according to Dunn's test
+se <- function(x) sd(x)/sqrt(length(x))
+standErrors <- aggregate(pcdata_sub[,3:9], list(pcdata_sub$population), se)
+standErrorsA <- round(standErrors[,c(2:7)],2)
+standErrorsB <- data.frame(round(standErrors[,c(8)],4))
+
+standErrors <- data.frame(cbind(standErrors[,1], standErrorsA, standErrorsB))
+
+# means.pel<-as.data.frame(colMeans(pcdata.pel[, 7, 13,15,16,21,22,24]))
+# means.nwhi<-as.data.frame(colMeans(pcdata.nwhi[, 7:54]))
+# means.mhi<-as.data.frame(colMeans(pcdata.mhi[, 7:54]))
+
+means <- cbind("PEL" = means.pel[,1], "NWHI" = means.nwhi, "MHI" = means.mhi)
 
 df_mhi = droplevels(subset(pcplot, pcplot$population=='mhi'))
 posslope_mhi = mean(df_mhi$FREQPOSSLOPEMEAN)
