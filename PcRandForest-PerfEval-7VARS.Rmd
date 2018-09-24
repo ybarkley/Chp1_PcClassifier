@@ -1,7 +1,7 @@
 ---
-title: "False Killer Whale Whistle Classification- Random Forest Analysis"
+title: "False Killer Whale Whistle Classification- RF with 7 signif diff variables"
 author: "Yvonne Barkley"
-date: "March 21, 2018"
+date: "September 24, 2018"
 output:
   html_document: default
   pdf_document: default
@@ -124,6 +124,8 @@ pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll
 #PIFSC desktop directory
 pcdata <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
 
+#subset 7 variables that are significantly different between all populations via Dunn's test
+pcdata <- pcdata[, c(1:7,13,15,16,21,22,24)]
 
 #Remove MHI29, cluster 4
 #pcdata <-droplevels(filter(pcdata, EncounterID != 'PcMHI29'))
@@ -142,7 +144,8 @@ w = 150             # Number of whistles randomly pulled from each group
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 100        #Zack: number of times you want to resample from your dataset
 
-#formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
+
+ #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
 
 
@@ -237,14 +240,14 @@ for(rep in 1:n_samps){
     }
   
 #Correlation Step####
-pcsub<-all[,7:53]
-#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
-tmp <- cor(pcsub)
-tmp[upper.tri(tmp)] <- 0
-diag(tmp) <- 0
-pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
-
-all <- cbind(all[, c(1:6)], pcsubcor)
+# pcsub<-all[,7:53]
+# #corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+# tmp <- cor(pcsub)
+# tmp[upper.tri(tmp)] <- 0
+# diag(tmp) <- 0
+# pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+# 
+# all <- cbind(all[, c(1:6)], pcsubcor)
 
   
   
@@ -512,6 +515,28 @@ write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\r
 
 ```
  
+
+
+```{r}
+#From PIFSC desktop
+#Save overall confusion matrix
+write.table(output_CorrectClass, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_ConfusionMatrix_PMN_7VARS_20180924.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_Results, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TotalResults_PMN_7VARS_20180924.csv", append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(output_WhistleClass, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TotalWhistleClass_PMN_7VARS_20180924.csv", append = T, row.names = F, col.names=T, sep = ",")
+
+write.table(output_TrainSetAll, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TrainSets_PMN_7VARS_20180924.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_TestSetAll, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TestResults_PMN_7VARS_20180924.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_varIMPtotal, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_ImportantVars_PMN_7VARS_20180924.csv", append = T, col.names=T, sep = ",")
+
+write.table(tunedAll, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TunedParameters_PMN_7VARS_20180924.csv", append = T, col.names=T, sep = ",")
+
+write.table(output_ModelFit, "C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp 1\\results\\PcResults_TotalModels_PMN_7VARS_20180924.csv", append = T, col.names=F, sep = ",")
+
+```
 
 ###Write outputs to file
 ```{r}
