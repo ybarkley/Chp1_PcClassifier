@@ -145,9 +145,6 @@ write.csv(kwM_new, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 
 ```
 
 
-
-
-
 ##Dunns Test for Multiple Comparisons WITHIN population
 ```{r}
 #Reference
@@ -220,7 +217,6 @@ dunnPdf <- sapply(dunnP, "[", c(2)) #list of dataframes
 dunnPdf <- as.data.frame(dunnPdf)
 
 write.csv(dunnPdf,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_test.csv', row.names = F)
-
 #list2env( setNames( test , paste('Pelagic', names(test), sep = '')), .GlobalEnv )
 
 
@@ -246,6 +242,73 @@ write.csv(dunnMdf,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\K
 
 
 ```
+
+##Kruskal-Wallis Test for BETWEEN populations
+```{r}
+#This makes a list of all K-W test results for all variables
+kwAll <- apply(pcdata[-c(1:6,54:61)],2, function(x) kruskal.test(x,pcdata$population))
+
+#I only want p-values < 0.05, pull out only pvalues from list (makes matrix)
+kwAll_pval <- do.call(rbind, lapply(kwAll, function(v){v$p.value})) 
+kwAll_x2 <- do.call(rbind, lapply(kwAll, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+kwAll_df <- do.call(rbind, lapply(kwAll, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+kwAll_dat <- data.frame(names, kwAll_x2, kwAll_df, kwAll_pval, row.names = NULL) #create dataframe 
+colnames(kwAll_dat)<-c("variable", "chi-squared", "df", "p.value")  #success!
+
+#filter out only variables with pvalues <= 0.05
+kwAll_signif <- droplevels(filter(kwAll_dat, as.numeric(kwAll_dat$p.value) <= 0.05) )
+
+#Subset only significantly different variables
+kwAllvars <- kwAll_signif[,1]
+idx <- match(kwAllvars, names(pcdata))  
+kwAll_new <- cbind(pcdata[,c(1:6)], pcdata[, idx])
+
+kwAll_NOTsignif <- droplevels(filter(kwAll_dat, as.numeric(kwAll_dat$p.value) >= 0.05))
+
+write.csv(kwAll_dat, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_KruskalWallis_btwnPopulation.csv')
+```
+
+##Dunn's Test - BETWEEN Populations
+```{r}
+
+#Reference
+#https://rcompanion.org/rcompanion/d_06.html
+library(FSA)
+library(rcompanion)
+
+#For loop to get dunns test for all variables plus the letter list
+#Not all variables are significantly different for some populations (NWHI & MHI), so comment out the dunn_letters portion to complete the Dunn's Tests for all variables. 
+dunn_VARS <- kwAll_new[,7:49] #pelagic
+
+#If a population has some variables that ARE NOT significantly different, an error in dunn_letters will occur
+#Find all variables with pvalue <= 0.05 and create a new dataframe, dunn_VARS, to check out which pairs of encounters have signif differences.
+idx2 = unique(dunn_resultsALL$variable[dunn_resultsALL$P.adj <= 0.05])
+dunn_VARS <- pcdata.M[, idx]
+
+
+dunn_lettersALL <- NULL
+dunn_resultsALL <-NULL
+for (v in colnames(dunn_VARS)){
+  dunn_v <- dunnTest(dunn_VARS[, v] ~ population, data=kwAll_new, method = 'bonferroni') #change data to  match population
+
+  dunn_v = dunn_v$res
+  dunn_v$variable <- v
+  dunn_resultsALL <- rbind(dunn_resultsALL, dunn_v)
+
+  dunn_letters <- cldList(comparison = dunn_v$Comparison,
+                         p.value = dunn_v$P.adj,
+                         threshold = 0.05)
+  dunn_letters$variable <- v
+  dunn_lettersALL <- rbind(dunn_lettersALL, dunn_letters)
+
+}
+
+write.csv(dunn_resultsALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_Dunns_btwnPop_signif.csv', row.names = F)
+
+write.csv(dunn_lettersALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_DunnsLetters_btwnPop.csv', row.names = F)
+```
+
+
 
 
 ##Mann-Whitney U-tests for BETWEEN populations (only comparing 2 at a time)

@@ -1,6 +1,58 @@
+## 9/24/18
+
+#Loooking at the original ROCCA classification from species classifier to evaluate how well the whistles were initially identified as Pc 
+library(dplyr)
+pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+ROCCAclass <-pcdata[, c(1,3,6)]
+ROCCAclass_EncID <- ROCCAclass %>% group_by(EncounterID, ClassifiedSpecies) %>% tally()
+ROCCAclass_Pop <- ROCCAclass %>% group_by(population, ClassifiedSpecies) %>% tally()
+
+ROCCAclass_Pop$population2 <- as.numeric(ROCCAclass_Pop$population)
+
+
+#Clunky way of calculating the percentage of whistles classied as each species for each population
+#use ifelse to handle multiple logicals, aka handles vectorized inputs
+ROCCAclass_Pop <- within(ROCCAclass_Pop, {
+  percent = ifelse(ROCCAclass_Pop$population2 == 1, ROCCAclass_Pop$n/600*100,ROCCAclass_Pop$n/650*100)
+  percent2 = ifelse(ROCCAclass_Pop$population2 == 3, ROCCAclass_Pop$n/1200*100, 'NA')
+                    
+})
+
+
+write.csv(ROCCAclass_Pop, "C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byPop.csv")
+write.csv(ROCCAclass_EncID, "C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byEnc.csv")
+
+#aggregate(ROCCAclass_Pop$n, by=list(Category=ROCCAclass_Pop$population), FUN=sum)
+ROCCA_Pop <- read.csv("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byPop.csv")
+ROCCA_Pop<- ROCCA_Pop[, -1]
+
+ROCCA_Pop$ClassifiedSpecies <- as.character(ROCCA_Pop$ClassifiedSpecies)
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Ambig'] = 'Ambiguous'
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Gm'] = 'Pilot Whale'
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Dc_Dd'] = 'Common Dolphin'
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Pc'] = 'False Killer Whale'
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Sb'] = 'Rough-toothed Dolphin'
+ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Sc'] = 'Striped Dolphin'
+ROCCA_Pop$ClassifiedSpecies <- as.factor(ROCCA_Pop$ClassifiedSpecies)
+
+ROCCA_Pop$population <-factor(ROCCA_Pop$population, levels=c("Pelagic", 'NWHI', 'MHI'), ordered = T)
+
+bar <- ggplot(ROCCA_Pop, aes(x=population, y=percent, fill = factor(ClassifiedSpecies))) + geom_bar(stat = "identity") +
+  theme_bw()+ 
+  theme(plot.background = element_rect(fill = "white"),
+        axis.title.x=element_text(size=10, face='bold'),
+        axis.text.x=element_text(size=10),
+        axis.text.y=element_text(size=10)) +
+  guides(fill=guide_legend(title="Classified Species"))+
+  labs(x="Population", y="Percentage", title = "ROCCA Species Classification") +
+  scale_fill_grey()
+
+ggsave("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots\\ROCCA_InitialClass.jpg", width = 11, height = 8, units = "in", type = "cairo-png")
+
+###########
+
+
 pcdata.pel <- droplevels(subset(pcdata.pm, population == 'pel'))
-
-
 pcdata.mhi <- droplevels(subset(pcdata.pm, population == 'mhi'))
 
 
@@ -41,49 +93,4 @@ df.median_IQR <- setDF(vars.dt[, as.list(unlist(lapply(.SD, function(x) list(med
                                 
 
 
-
-#plotting histograms for each variable in each encounter
-varsOnly_long<-melt(varsOnly, id.vars=1, variable.name = 'Response', value.name = 'value')
-
-
-
-plotHistFunc <- function(x, na.rm = TRUE, ...) {
-  nm <- names(x)
-  for (i in seq_along(nm)) {
-    plots <-ggplot(x,aes_string(x = nm[i])) + geom_histogram(alpha = .5,fill = "dodgerblue", bins = 30)
-    ggsave(plots,filename=paste("myplot",nm[i],".png",sep=""))
-  }
-}
-
-p<-ggplot(varsOnly_long,aes(x = value)) + 
-  facet_wrap(~Response,scales = "free_x") + 
-  geom_histogram()
-p<-p+labs(title="Response Variables")
-p+theme(axis.text=element_text(size=4), 
-        axis.title=element_text(size=8, face='bold'),
-        text=element_text(size=8),
-        plot.title=element_text(size=12))
-
-scatter<-ggplot(varsOnly_long,aes(x = EncounterID, y = value)) + 
-  geom_point()+
-  facet_wrap(~Response,scales = "free_x") + 
-  labs(title="Response Variables")+
-  theme(axis.text=element_text(size=5), 
-        axis.title=element_text(size=8, face='bold'),
-        text=element_text(size=8),
-        plot.title=element_text(size=8))
-
-
-
-ggplot(subset(m, variable == "x"), aes(w, value)) + geom_line() 
-p <- ggplot(m, aes(w, value)) + geom_line(aes(colour=variable)
-d_ply(m, .(variable), function(d) p %+% d, .print=TRUE)
-
-plot(value~EncounterID, varsOnly_long)
-
-
-
-# plot(df3$FREQABSSLOPEMEAN.sd, df3$EncounterID, y_axis)
-library(ggplot2)
-ggplot()
 

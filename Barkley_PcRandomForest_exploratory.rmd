@@ -17,7 +17,7 @@ names<-names(pcplotsub)
 names<-names[-c(1)]
 ```
 
-##Density plots of variables across populations
+##Multipanel Density plots of variables within and between populations
 ```{r}
 ### 9/12/2018 ####
 library(ggplot2)
@@ -40,6 +40,8 @@ names<-names[-1]
 
 ##Functioning code for Density Plots in multipanels on multiple pages ####
   #ggplot2 density plots
+
+###BY POPULATION
 plots <- list()
 for(nm in names){
 plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  geom_density(alpha = 0.3) +
@@ -52,7 +54,7 @@ plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  
 #ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
 }
 #arrange plots 
-multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "top" )
 #export plots to multiple pages
 ggexport(multipage, filename = "multi.page.ggplot2.pdf")
 #another option to plot on multiple pages, but not as good
