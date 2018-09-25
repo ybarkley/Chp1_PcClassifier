@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ## 9/24/18
 
 #Loooking at the original ROCCA classification from species classifier to evaluate how well the whistles were initially identified as Pc 
@@ -22,14 +21,12 @@ ROCCAclass_Pop <- within(ROCCAclass_Pop, {
 
 write.csv(ROCCAclass_Pop, "C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byPop.csv")
 write.csv(ROCCAclass_EncID, "C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byEnc.csv")
-=======
->>>>>>> c88fbca0fbc881fdffb3d5b06d94a9b31266fd9c
+
 
 #aggregate(ROCCAclass_Pop$n, by=list(Category=ROCCAclass_Pop$population), FUN=sum)
 ROCCA_Pop <- read.csv("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ROCCA_InitialClassification_byPop.csv")
 ROCCA_Pop<- ROCCA_Pop[, -1]
 
-<<<<<<< HEAD
 ROCCA_Pop$ClassifiedSpecies <- as.character(ROCCA_Pop$ClassifiedSpecies)
 ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Ambig'] = 'Ambiguous'
 ROCCA_Pop$ClassifiedSpecies[ROCCA_Pop$ClassifiedSpecies=='Gm'] = 'Pilot Whale'
@@ -59,8 +56,7 @@ ggsave("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots\\
 
 pcdata.pel <- droplevels(subset(pcdata.pm, population == 'pel'))
 pcdata.mhi <- droplevels(subset(pcdata.pm, population == 'mhi'))
-=======
->>>>>>> c88fbca0fbc881fdffb3d5b06d94a9b31266fd9c
+
 
 
 #PIFSC desktop
