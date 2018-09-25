@@ -40,14 +40,15 @@ ROCCA_Pop$population <-factor(ROCCA_Pop$population, levels=c("Pelagic", 'NWHI', 
 bar <- ggplot(ROCCA_Pop, aes(x=population, y=percent, fill = factor(ClassifiedSpecies))) + geom_bar(stat = "identity") +
   theme_bw()+ 
   theme(plot.background = element_rect(fill = "white"),
-        axis.title.x=element_text(size=10, face='bold'),
+        axis.title=element_text(size=12, face='bold'),
         axis.text.x=element_text(size=10),
-        axis.text.y=element_text(size=10)) +
+        axis.text.y=element_text(size=10),
+        plot.title=element_text(size=15, hjust = 0.5, face = 'bold')) +
   guides(fill=guide_legend(title="Classified Species"))+
-  labs(x="Population", y="Percentage", title = "ROCCA Species Classification") +
-  scale_fill_grey()
+  labs(x="Population", y="Percentage", title = "Initial Species Classification by ROCCA") +
+  scale_fill_grey(start = 0.05, end = .85)
 
-ggsave("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots\\ROCCA_InitialClass.jpg", width = 11, height = 8, units = "in", type = "cairo-png")
+ggsave("C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots\\ROCCA_InitialClass.png", width = 10, height = 8, units = "in", type = "cairo-png")
 
 ###########
 
