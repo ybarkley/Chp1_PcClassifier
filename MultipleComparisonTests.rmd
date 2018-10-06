@@ -309,7 +309,69 @@ write.csv(dunn_lettersALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\r
 ```
 
 
+## KS test - Oct 5, 2018 Annie's suggestion ##
+```{r}
+# Use KS test only on continuous variables
+ks_vars_m <- pcdata.M[, c(7:24, 28:32, 43:47, 49:53)]
+ks_vars_n <- pcdata.N[, c(7:24, 28:32, 43:47, 49:53)]
+ks_vars_p <- pcdata.P[, c(7:24, 28:32, 43:47, 49:53)]
 
+
+ks_resultsALL = NULL
+#names_ks <-names(ks_vars_m)
+
+for (m in colnames(ks_vars_m))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ks <- ks.test(ks_vars_m[,m], ks_vars_n[,m])
+       
+      ks_df <- cbind(colnames(ks_vars_m[m]),ks$statistic,ks$p.value)
+
+      ks_resultsALL <- rbind(ks_resultsALL, ks_df)
+    
+       }
+  colnames(ks_resultsALL) <- c("variable", "statistic", "p.value")   
+
+
+
+pcsub<-pcdata.M[,7:53]
+#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+all <- cbind(all[, c(1:6)], pcsubcor)
+
+KS_resultsALL <-NULL
+KS_resultsALL2 <-NULL
+
+for (k in colnames(KS_VARS)){
+  KS_k <- ks.test(KS_VARS[, k], pcdata.MN$population, data=pcdata.MN, alternative = 'two-sided')
+  # MannWhit_v = MannWhit_v$res
+  # MannWhit_v$variable <- v
+  MannWhit_k = MannWhit_k$p.value
+
+#Convert it to a full table
+MannWhit_k <- fullPTable(MannWhit_k)
+  
+MannWhit_k <- cbind(MannWhit_k, k)
+  
+  MannWhit_resultsALL2 <- rbind(MannWhit_resultsALL2, MannWhit_k)
+  
+  # MannWhit_letters <- cldList(comparison = MannWhit_v$Comparison,
+  #                        p.value = MannWhit_v$P.adj,
+  #                        threshold = 0.05)
+  # MannWhit_letters$variable <- v
+  # MannWhit_lettersALL <- rbind(MannWhit_lettersALL, MannWhit_letters)
+
+}
+
+write.csv(MannWhit_resultsALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_MannWhitney_All.csv', row.names = T)
+
+
+```
 
 ##Mann-Whitney U-tests for BETWEEN populations (only comparing 2 at a time)
 ```{r}

@@ -85,7 +85,8 @@ plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  
         axis.title.x=element_text(size=10, face='bold'),
         axis.text.x=element_text(size=8),
         axis.text.y=element_text(size=8)) +
-        guides(fill=guide_legend(title="Population"))
+        guides(fill=guide_legend(title="Population")) +
+  scale_fill_brewer()
 #ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
 }
 #arrange plots 
@@ -108,18 +109,20 @@ levels(pcdata.Msub$EncounterID) <- c("M1", "M2", "M3", "M4" )
 plots.P <- list()
 plots.N <- list()
 plots.M <- list()
+
 for(nm in names){
-plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.3) +
+plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.5) +
     theme_bw()+
     theme(plot.background = element_rect(fill = "white"),
         axis.title.x=element_text(size=10, face='bold'),
         axis.text.x=element_text(size=8),
         axis.text.y=element_text(size=8)) +
-        guides(fill=guide_legend(title="Population"))
+        guides(fill=guide_legend(title="Population")) +
+  scale_fill_brewer(palette = "Paired")
 #ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
 }
 #arrange plots 
-multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "top" )
 #export plots to multiple pages
 ggexport(multipage, filename = "PcDensityPlot_PelagicVariables.pdf")
 
