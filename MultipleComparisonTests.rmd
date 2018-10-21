@@ -309,41 +309,117 @@ write.csv(dunn_lettersALL, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\r
 ```
 
 
+##MHI correlation
+```{r}    
+pcsub<-pcdata.M[,7:53]
+corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_M <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Muncorr <- cbind(pcdata.M[, c(1:6)], pcsubcor_M)
+
+```
+
+##NWHI correlation
+```{r}    
+pcsub<-pcdata.N[,7:53]
+#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_N <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Nuncorr <- cbind(pcdata.N[, c(1:6)], pcsubcor_N)
+
+```
+
+##Pelagic correlation
+```{r}    
+pcsub<-pcdata.P[,7:53]
+corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_P <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
+
+```
+
+
 ## KS test - Oct 5, 2018 Annie's suggestion ##
 ```{r}
+#find the common uncorrelated variables for each population
+
+idx_test <- na.omit(match(names(pcdata.Muncorr[ ,c(7:length(pcdata.Muncorr))]), names(pcdata.Nuncorr[, c(7:length(pcdata.Nuncorr))])) ) 
+idx_test2 <- na.omit(match(names(pcdata.Nuncorr[ ,c(7:length(pcdata.Nuncorr))]), names(pcdata.Muncorr[, c(7:length(pcdata.Muncorr))])) ) 
+
+
+ks_vars_m <- pcsubcor_N[, idx_test]
+ks_vars_n <- pcsubcor_M[, idx_test2]
+
 # Use KS test only on continuous variables
-ks_vars_m <- pcdata.M[, c(7:24, 28:32, 43:47, 49:53)]
-ks_vars_n <- pcdata.N[, c(7:24, 28:32, 43:47, 49:53)]
-ks_vars_p <- pcdata.P[, c(7:24, 28:32, 43:47, 49:53)]
+ks_vars_m <- pcdata.Muncorr[ ,c(7:length(pcdata.Muncorr))]
+ks_vars_n <- pcdata.Nuncorr[, c(7:length(pcdata.Nuncorr))]
+ks_vars_p <- pcdata.Puncorr[, c(7:length(pcdata.Puncorr))]
 
-
-ks_resultsALL = NULL
+# MHI vs NWHI
+ks_resultsMN = NULL
 #names_ks <-names(ks_vars_m)
 
 for (m in colnames(ks_vars_m))
      {
   #for (n in colnames(ks_vars_n))
      #{
-       ks <- ks.test(ks_vars_m[,m], ks_vars_n[,m])
+       ksMN <- ks.test(ks_vars_m[,m], ks_vars_n[,m])
        
-      ks_df <- cbind(colnames(ks_vars_m[m]),ks$statistic,ks$p.value)
+      ksMN_df <- cbind(colnames(ks_vars_m[m]),ksMN$statistic,ksMN$p.value)
 
-      ks_resultsALL <- rbind(ks_resultsALL, ks_df)
+      ks_resultsMN <- rbind(ks_resultsMN, ksMN_df)
     
        }
-  colnames(ks_resultsALL) <- c("variable", "statistic", "p.value")   
+  colnames(ks_resultsMN) <- c("variable", "statistic", "p.value")   
+
+  #MHI vs Pelagic
+ks_resultsMP = NULL
+#names_ks <-names(ks_vars_m)
+
+for (m in colnames(ks_vars_m))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ksMP <- ks.test(ks_vars_m[,m], ks_vars_p[,m])
+       
+      ksMP_df <- cbind(colnames(ks_vars_m[m]), ksMP$statistic, ksMP$p.value)
+
+      ks_resultsMP <- rbind(ks_resultsMP, ksMP_df)
+    
+       }
+  colnames(ks_resultsMP) <- c("variable", "statistic", "p.value") 
+
+  
+  #MHI vs Pelagic
+ks_resultsPN = NULL
+#names_ks <-names(ks_vars_m)
+
+for (m in colnames(ks_vars_m))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ksPN <- ks.test(ks_vars_m[,m], ks_vars_p[,m])
+       
+      ksPN_df <- cbind(colnames(ks_vars_m[m]), ksPN$statistic, ksPN$p.value)
+
+      ks_resultsPN <- rbind(ks_resultsPN, ksPN_df)
+    
+       }
+  colnames(ks_resultsPN) <- c("variable", "statistic", "p.value")
+```
 
 
-
-pcsub<-pcdata.M[,7:53]
-#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
-tmp <- cor(pcsub)
-tmp[upper.tri(tmp)] <- 0
-diag(tmp) <- 0
-pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
-
-all <- cbind(all[, c(1:6)], pcsubcor)
-
+```{r}
 KS_resultsALL <-NULL
 KS_resultsALL2 <-NULL
 
