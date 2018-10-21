@@ -1,0 +1,357 @@
+This code plots the distribution of the ROCCA variables for each population to explore the data and know what we're working with for statistical tests.
+
+
+```{r message=FALSE}
+library(dplyr)
+
+pcplot<- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+pcdata.P <- droplevels(filter(pcplot, population == "Pelagic"))      
+pcdata.N <- droplevels(filter(pcplot, population == "NWHI"))      
+pcdata.M <- droplevels(filter(pcplot, population == "MHI"))
+
+#remove columns
+pcplotsub <- pcplot[, -c(2:6, 54:61)]
+pcdata.Msub <- pcdata.M[, -c(2,4:6, 54:61)]
+names<-names(pcdata.Msub)
+names<-names(pcplotsub)
+names<-names[-c(1)]
+```
+
+##Density plots of variables across populations
+```{r}
+### 9/12/2018 ####
+library(ggplot2)
+library(reshape2)
+library(ggpubr)
+
+pcplotsub$population <-factor(pcplot$population, levels=c("Pelagic", 'NWHI', 'MHI'), ordered = T) #reorder population factor
+names<-names(pcplotsub)
+names<-names[-1]
+# #This works below, but plots separate histograms if the data are subsetted for each population beforehand
+# classes<-sapply(pcdata.Msub,class)
+# names[classes == 'numeric']
+# par(mfrow=c(4, 4))
+# for (name in names[classes == 'numeric']){
+#  
+#  p <- hist(pcdata.Msub[,name], main = name)
+#   ggsave 
+# }
+
+
+##Functioning code for Density Plots in multipanels on multiple pages ####
+  #ggplot2 density plots
+plots <- list()
+for(nm in names){
+plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  geom_density(alpha = 0.3) +
+    theme_bw()+
+    theme(plot.background = element_rect(fill = "white"),
+        axis.title.x=element_text(size=10, face='bold'),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8)) +
+        guides(fill=guide_legend(title="Population"))
+#ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
+}
+#arrange plots 
+multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+#export plots to multiple pages
+ggexport(multipage, filename = "multi.page.ggplot2.pdf")
+#another option to plot on multiple pages, but not as good
+plots2 = dlply(pcplot , names, `%+%`, e1 = plots[[nm]])
+ml = marrangeGrob(plots, nrow=4, ncol=2)
+ggsave("multipage.pdf", ml)
+
+
+### By encounter
+#change factor order
+#reverse
+#  pcdata.Msub$population = with(pcdata.Msub, factor(population, levels = rev(levels(population))))
+#custom
+levels(pcdata.Msub$EncounterID) <- c("M1", "M2", "M3", "M4" )
+
+plots.P <- list()
+plots.N <- list()
+plots.M <- list()
+for(nm in names){
+plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.3) +
+    theme_bw()+
+    theme(plot.background = element_rect(fill = "white"),
+        axis.title.x=element_text(size=10, face='bold'),
+        axis.text.x=element_text(size=8),
+        axis.text.y=element_text(size=8)) +
+        guides(fill=guide_legend(title="Population"))
+#ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
+}
+#arrange plots 
+multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
+#export plots to multiple pages
+ggexport(multipage, filename = "PcDensityPlot_PelagicVariables.pdf")
+
+
+```
+
+
+## Mean of the Mean Positive Slope for MHI
+```{r}
+df_mhi = droplevels(subset(pcplot, pcplot$population=='mhi'))
+posslope_mhi = mean(df_mhi$FREQPOSSLOPEMEAN)
+plot(as.factor(df_mhi$group), df_mhi$FREQPOSSLOPEMEAN, xlab="Encounter ID", ylab="Mean Positive Slope", main="Main Hawaiian Island Population")
+plot(as.factor(df_mhi$group), df_mhi$DURATION, xlab="Encounter ID", ylab="Mean Positive Slope", main="Main Hawaiian Island Population")
+plot(as.factor(df_mhi$group), df_mhi$FREQSWEEPFLATPERCENT, xlab="Encounter ID", ylab="% of the whistle with zero slope ", main="Main Hawaiian Island Population")
+
+posslope_mhi = mean(df_mhi$FREQNEGSLOPEMEAN)
+plot(df_mhi$id, df_mhi$FREQNEGSLOPEMEAN, xlab="Encounter ID", ylab="Mean Negative Slope", main="Main Hawaiian Island Population")
+
+plot(df_mhi$id, df_mhi$DURATION, xlab="Encounter ID", ylab="Mean Negative Slope", main="Main Hawaiian Island Population")
+plot(df_mhi$id, df_mhi$FREQSWEEPFLATPERCENT, xlab="Encounter ID", ylab="Mean Negative Slope", main="Main Hawaiian Island Population")
+plot(df_mhi$id, df_mhi$FREQSLOPEMEAN, xlab="Encounter ID", ylab="Mean Negative Slope", main="Main Hawaiian Island Population")
+
+
+mhi30 = filter(df_mhi, df_mhi$group == 30)
+#Mean of mean positive slope for each  mhi encounter 
+write.csv(list(aggregate(df_mhi$FREQPOSSLOPEMEAN, by=list(df_mhi$id), FUN=mean)),'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\MHI_MeanPosSlope.csv') 
+aggregate(df_mhi$FREQNEGSLOPEMEAN, by=list(df_mhi$id), FUN=mean)
+aggregate(df_mhi$FREQPOSSLOPEMEAN, by=list(df_mhi$Recorder), FUN=median)
+aggregate(df_mhi$DURATION, by=list(df_mhi$Recorder), FUN=median)
+```
+
+mean(mhi30redo$FREQPOSSLOPEMEAN)
+
+library(lattice)
+## Mean of the Mean Positive Slope for PELAGIC
+```{r}
+df_pel = droplevels(subset(pcplot, pcplot$population=='pelagic'))
+posslope_pel = mean(df_pel$FREQPOSSLOPEMEAN)
+plot(as.factor(df_pel$group), df_pel$FREQPOSSLOPEMEAN, xlab="Encounter ID", ylab="Mean Positive Slope", main= "Pelagic Population")
+
+posslope_pel = mean(df_pel$FREQNEGSLOPEMEAN)
+plot(as.factor(df_pel$group), df_pel$FREQNEGSLOPEMEAN, xlab="Encounter ID", ylab="Mean Negative Slope", main= "Pelagic Population")
+
+plot(as.factor(df_pel$group), df_pel$FREQSWEEPFLATPERCENT, xlab="Encounter ID", ylab="% of the whistle with zero slope ", main="Pelagic Population")
+plot(as.factor(df_pel$group), df_pel$FREQQUARTER3, xlab="Encounter ID", ylab="% of the whistle with zero slope ", main="Pelagic Population")
+
+write.csv(list(aggregate(df_pel$FREQPOSSLOPEMEAN, by=list(df_pel$id), FUN=mean)),'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Pelagic_MeanPosSlope.csv') 
+aggregate(df_pel$FREQNEGSLOPEMEAN, by=list(df_pel$id), FUN=mean)
+aggregate(df_pel$FREQPOSSLOPEMEAN, by=list(df_pel$Recorder), FUN=median)
+aggregate(df_pel$FREQQUARTER3, by=list(df_pel$id), FUN=mean)
+```
+
+## Mean of the Mean Positive Slope for NWHI
+```{r}
+df_nwhi = droplevels(subset(pcplot, pcplot$population=='nwhi'))
+posslope_nwhi = mean(df_nwhi$FREQPOSSLOPEMEAN)
+plot(as.factor(df_nwhi$group), df_nwhi$FREQPOSSLOPEMEAN, xlab="Encounter ID", ylab="Mean Positive Slope", main="Northwestern Hawaiian Island Population")
+
+posslope_nwhi = mean(df_nwhi$FREQNEGSLOPEMEAN)
+plot(df_nwhi$id, df_nwhi$FREQNEGSLOPEMEAN, xlab="Encounter ID", ylab="Mean Negative Slope", main="Northwestern Hawaiian Island Population")
+
+
+plot(as.factor(df_nwhi$group), df_nwhi$FREQSWEEPFLATPERCENT, xlab="Encounter ID", ylab="% of the whistle with zero slope ", main="Northwestern Hawaiian Island Population")
+
+write.csv(list(aggregate(df_nwhi$FREQPOSSLOPEMEAN, by=list(df_nwhi$id), FUN=mean)),'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\NWHI_MeanPosSlope.csv')
+aggregate(df_nwhi$FREQPOSSLOPEMEAN, by=list(df_nwhi$id), FUN=mean)
+aggregate(df_nwhi$FREQNEGSLOPEMEAN, by=list(df_nwhi$id), FUN=mean)
+aggregate(df_nwhi$FREQPOSSLOPEMEAN, by=list(df_nwhi$Recorder), FUN=median)
+aggregate(df_nwhi$FREQQUARTER3, by=list(df_nwhi$id), FUN=mean)
+
+
+plot(as.factor(pcplot$group), pcplot$FREQQUARTER3, col=pcplot$population, xlab="Encounter ID", ylab="Frequency of the third quarter of the whistle")
+```
+
+
+```{r}
+library(ggplot2)
+#shades of gray###
+color <- c('#35bb7c', 'black', '#947d51','#8576aa')
+
+
+#Plot Mean positive slope / duration
+freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="Frequency (Hz)", 
+       title="Mean Positive Slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  scale_color_manual(values=color) 
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQPOSSLOPE.png', width = 11, height = 8, units = "in", type = "cairo-png")
+
+
+
+
+# Plot third-quarter frequency / duration
+freqspd<-ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="Frequency (Hz)")+ 
+       #title="Third Quarter Frequency", 
+       #subtitle="Frequency at three-quarters of the duration") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  scale_color_manual(values=color) 
+ 
+  
+
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_freqspread.png', width = 11, height = 8, units = "in", type = "cairo-png")
+
+
+
+
+# Plot FREQSWEEPFLATPERCENT
+freq <- ggplot(pcplot, aes(x = EncounterID, y = pcplot$FREQQUARTER, col=as.factor(population))) +
+  geom_boxplot() +
+  theme_bw() +
+  labs(x="Encounter", y="", 
+       title="Percent Flat",
+       subtitle="Percent of the whistle with zero slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=7),
+        axis.text.y = element_text(size=9),
+        axis.title=element_text(size=12,face="bold"),
+        legend.title = element_blank()) +
+  guides(shape = guide_legend(override.aes = list(size=10)))+
+  scale_color_manual(values=color)
+ggsave('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\Variable Importance\\Plot_FREQQUARTER.png', width = 11, height = 8, units = "in", type = "cairo-png")
+#ggsave('Plot_FREQSWEEPFLAT.png', device='pdf', width = 11, height = 8, units = "in")
+```
+
+```{r}
+# Plot Accuracy by Duration
+pcACC <- read.csv("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/Barkley_Sensitivity Analysis Table.csv")
+
+#purple, green, orange
+colorPOP <- c('#791fb8','#2b961a','darkorange2')
+
+ggplot(pcACC, aes(x = pcACC$duration..s., y = accuracy, col=as.factor(Recorder))) +
+  
+  theme_bw() +
+  labs(x="Duration (s)", y="Percent Accuracy")+ 
+  geom_text(aes(label=pcACC$EncounterPoster), size=5, vjust=-0.1)+
+  geom_point() +
+  #title="Percent Flat", 
+  #subtitle="Percent of the whistle with zero slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=12),
+        axis.text.y = element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        legend.title = element_blank(),
+        legend.text=element_text(size=15)) +
+  guides(shape=guide_legend(override.aes = list(shape = 16)))+
+  scale_color_manual(values=color) 
+ggsave('Plot_AccVSDur.pdf', width = 11, height = 8, units = "in")
+
+
+#just to get legend with dots
+
+ggplot(pcACC, aes(x = pcACC$duration..s., y = accuracy, col=as.factor(Recorder))) +
+  
+  theme_bw() +
+  labs(x="Duration (s)", y="Percent Accuracy")+ 
+  geom_point() +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=12),
+        axis.text.y = element_text(size=12),
+        axis.title=element_text(size=16,face="bold"),
+        legend.title = element_blank(),
+        legend.text=element_text(size=15)) +
+  guides(color = guide_legend(override.aes = list(size=5)))+
+  scale_color_manual(values=color)
+ggsave('Plot_AccVSDurLEGEND.pdf', width = 11, height = 8, units = "in")
+
+
+ggplot(pcACC, aes(x = pcACC$Recorder, y = accuracy, col=as.factor(Population))) +
+  
+  theme_bw() +
+  labs(x="Recorder Type", y="Percent Accuracy")+ 
+  geom_point()+
+  geom_text(aes(label=pcACC$EncounterPoster), size=4, hjust=0, nudge_x=0.05)+
+  #title="Percent Flat", 
+  #subtitle="Percent of the whistle with zero slope") +
+  theme(panel.background = element_rect(fill = "white"),
+        plot.background = element_rect(fill = "white"),
+        plot.title = element_text(size=20, hjust=0.5, face='bold'),
+        plot.subtitle=element_text(size=15, hjust=0.5, face="italic", color="black"),
+        panel.grid.major = element_blank(),
+        axis.text.x = element_text(size=12, face='bold'),
+        axis.text.y = element_text(size=12, face='bold'),
+        axis.title=element_text(size=16,face="bold"),
+        legend.position = "none") + #no legend
+  guides(shape=guide_legend(override.aes = list(shape = 16)))+
+  scale_color_manual(values=colorPOP) 
+ggsave('Plot_AccVSDur.png', width = 11, height = 8, units = "in", type = "cairo-png")
+```
+
+```{r}
+#Explore Cluster 4, MHI 29
+
+mhi29 <- subset(pcplot, pcplot$group == 30)
+
+mhi.only <- subset(pcplot, pcplot$population == 'MHI')
+```
+
+
+
+
+
+
+
+
+```{r}
+
+for (i in colnames) {
+    hist(pcdata.M[,i], xlim=c(0, 12000), breaks=seq(0, 12000, 100), main=colnames[i], probability=TRUE, col="gray", border="white")
+}
+
+#violin plot
+library(vioplot)
+
+colnames <-colnames(pcplot)[4:50]
+
+par(mfrow=c(3,3))
+
+  ggplot(pcplot, aes(x=population, y=FREQMAX)) + geom_violin()
+  ggplot(pcplot, aes(x=population, y=FREQMIN)) + geom_violin()
+
+
+melted = melt(pcplot, id =c("population")) 
+
+ggplot(melted, aes(value)) + facet_grid(~variable) + geom_histogram()+
+  theme(axis.text.x=element_text(size=8), 
+        axis.title.x=element_text(size=8, face='bold'),
+        axis.text.y=element_text(size=8), 
+        axis.title.y=element_text(size=8, face='bold'),
+         text=element_text(size=8),
+        plot.title=element_text(size=12, hjust = 0.5, face = 'bold'),
+        strip.text.x = element_text(size = 5),
+        plot.margin = unit(c(0.5,0.25,0.5,0.25), "cm"))
+
+
+
+
+
+```
