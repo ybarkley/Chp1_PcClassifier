@@ -1,0 +1,312 @@
+---
+title: "Kolmogorov-Smirnov Tests"
+author: "Yvonne Barkley"
+date: "November 25, 2018"
+output: html_document
+---
+
+
+```{r}
+library(dplyr)
+library(data.table)
+
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+
+## Pull out continuous variables
+pcdata_cont <- pcdata[, c(1:24,28:32,45:47,49:53)]
+
+#Filter out correlated variables
+library(corrplot)
+pcsub<-pcdata_cont[,7:37]
+corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+pcdata_cont2 <- cbind(pcdata_cont[, c(1:6)], pcsubcor)
+
+
+# pcdata.MN <- filter(pcdata, population == "MHI" | population == "NWHI")
+# pcdata.PM <- droplevels(filter(pcdata, population == "MHI" | population == "Pelagic"))
+# pcdata.PN <- droplevels(filter(pcdata, population == "Pelagic" | population == "NWHI"))
+
+
+pcdata.P <- droplevels(filter(pcdata_cont, population == "Pelagic"))      
+pcdata.N <- droplevels(filter(pcdata_cont, population == "NWHI"))      
+pcdata.M <- droplevels(filter(pcdata_cont, population == "MHI"))
+
+```
+
+
+
+
+
+## KS test - Oct 5, 2018 Annie's suggestion ##
+
+
+BETWEEN POPULATIONS
+Test correlation of variables for each POPULATION separately, then match up the variables that are left.
+
+##MHI correlation
+```{r}    
+#Using only continuous variables, determine the correlated variables within the MHI whistles
+pcsub<-pcdata.M[,7:37]
+corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_M <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Muncorr <- cbind(pcdata.M[, c(1:6)], pcsubcor_M)
+
+```
+
+##NWHI correlation
+```{r}    
+#Using only continuous variables, determine the correlated variables within the NWHI whistles
+pcsub<-pcdata.N[,7:37]
+#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_N <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Nuncorr <- cbind(pcdata.N[, c(1:6)], pcsubcor_N)
+
+```
+
+##Pelagic correlation
+```{r}    
+##Using only continuous variables, determine the correlated variables within the Pelagic whistles
+pcsub<-pcdata.P[,7:37]
+#corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
+tmp <- cor(pcsub)
+tmp[upper.tri(tmp)] <- 0
+diag(tmp) <- 0
+pcsubcor_P <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
+
+pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
+
+```
+
+
+
+```{r}
+#create dataframe combining uncorrelated variables and population column
+pcsubcor_M <- cbind('population' = pcdata.Muncorr[,1], pcdata.Muncorr[,c(7:length(pcdata.Muncorr))])
+pcsubcor_N <- cbind('population' = pcdata.Nuncorr[,1], pcdata.Nuncorr[,c(7:length(pcdata.Nuncorr))])
+pcsubcor_P <- cbind('population' = pcdata.Puncorr[,1], pcdata.Puncorr[,c(7:length(pcdata.Puncorr))])
+
+
+
+
+#find the common uncorrelated variables matching between each pair of populations
+vars_M = names(pcsubcor_M)
+vars_N = names(pcsubcor_N)
+vars_P = names(pcsubcor_P)
+
+##MHI vs NWHI##
+# These are the variables in NWHI that match with MHI - omit na's or the vector won't be the proper length
+idx_M <- na.omit(match(vars_M, vars_N))
+# idx_M <- match(names(pcdata.Muncorr[ ,c(7:length(pcdata.Muncorr))]), names(pcdata.Nuncorr[, c(7:length(pcdata.Nuncorr))]), nomatch = NA_integer_, incomparables = NULL )
+
+#These are the variables in MHI that match with MHI - omit na's or the vector won't be the proper length
+idx_N <- na.omit(match(vars_N, vars_M))
+
+# idx_N <- na.omit(match(names(pcdata.Nuncorr[ ,c(7:length(pcdata.Nuncorr))]), names(pcdata.Muncorr[, c(7:length(pcdata.Muncorr))])) )
+
+ks_vars_m <- pcsubcor_M[, idx_N]
+ks_vars_n <- pcsubcor_N[, idx_M]
+
+#Remove population column before KS test
+ks_vars_m <- ks_vars_m[, -1]
+ks_vars_n <- ks_vars_n[, -1]
+
+# MHI vs NWHI
+ks_resultsMN = NULL
+#names_ks <-names(ks_vars_m)
+
+for (i in colnames(ks_vars_m))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ksMN <- ks.test(ks_vars_m[,i], ks_vars_n[,i])
+       
+      ksMN_df <- cbind(colnames(ks_vars_m[i]),ksMN$statistic,ksMN$p.value)
+
+      ks_resultsMN <- rbind(ks_resultsMN, ksMN_df)
+    
+       }
+  colnames(ks_resultsMN) <- c("variable", "statistic", "p.value")   
+comparison = 'MN'
+ks_resultsMN <- cbind(ks_resultsMN, comparison) 
+
+
+##MHI vs Pelagic##
+idx_M2 <- na.omit(match(vars_M, vars_P)) 
+idx_P <- na.omit(match(vars_P, vars_M))
+
+ks_vars_m2 <- pcsubcor_M[, idx_P] 
+ks_vars_p <- pcsubcor_P[, idx_M2]
+ 
+#Remove population column before KS test
+ks_vars_m2 <- ks_vars_m2[, -1]
+ks_vars_p <- ks_vars_p[, -1]
+  
+  
+ks_resultsMP = NULL
+#names_ks <-names(ks_vars_m)
+
+for (i in colnames(ks_vars_m2))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ksMP <- ks.test(ks_vars_m2[,i], ks_vars_p[,i])
+       
+      ksMP_df <- cbind(colnames(ks_vars_m2[i]), ksMP$statistic, ksMP$p.value)
+
+      ks_resultsMP <- rbind(ks_resultsMP, ksMP_df)
+    
+       }
+  colnames(ks_resultsMP) <- c("variable", "statistic", "p.value") 
+comparison = 'MP'
+ks_resultsMP <- cbind(ks_resultsMP, comparison)  
+
+##Pelagic vs NWHI##
+idx_P <- na.omit(match(vars_P, vars_N))
+idx_N2 <- na.omit(match(vars_N, vars_P)) 
+
+ks_vars_p <- pcsubcor_P[, idx_N2]
+ks_vars_n2 <- pcsubcor_N[, idx_P] 
+
+#Remove population column before KS test
+ks_vars_p <- ks_vars_p[, -1]
+ks_vars_n2 <- ks_vars_n2[, -1]
+
+ks_resultsPN = NULL
+#names_ks <-names(ks_vars_m)
+
+for (i in colnames(ks_vars_p))
+     {
+  #for (n in colnames(ks_vars_n))
+     #{
+       ksPN <- ks.test(ks_vars_p[,i], ks_vars_n2[,i])
+       
+      ksPN_df <- cbind(colnames(ks_vars_p[i]), ksPN$statistic, ksPN$p.value)
+
+      ks_resultsPN <- rbind(ks_resultsPN, ksPN_df)
+    
+       }
+  colnames(ks_resultsPN) <- c("variable", "statistic", "p.value") 
+  
+  comparison = 'PN'
+  ks_resultsPN <- cbind(ks_resultsPN, comparison)
+
+#Combine all ks results into one data frame
+ls <- list(ks_resultsMN, ks_resultsMP, ks_resultsPN)
+
+df <- NULL
+for (u in ls){
+  d <- data.frame(u)
+  df <- rbind(df, d)
+}
+
+
+```
+
+Test for normality in uncorrelated variables using Shapiro-Wilks test with Bonferroni Correction and with Normal Q-Q plots
+###only duration and the third quarter frequency were normal
+```{r}
+qqnorm(ks_vars_m$DURATION)
+
+shapiro_test_df <- function(df, bonf= TRUE, alpha= 0.05) {
+  l <- lapply(df, shapiro.test)
+  s <- do.call("c", lapply(l, "[[", 1))
+  p <- do.call("c", lapply(l, "[[", 2))
+  if (bonf == TRUE) {
+    sig <- ifelse(p > alpha / length(l), "H0", "Ha")
+  } else {
+    sig <- ifelse(p > alpha, "H0", "Ha")
+  }
+  return(list(statistic= s,
+              p.value= p,
+              significance= sig,
+              method= ifelse(bonf == TRUE, "Shapiro-Wilks test with Bonferroni Correction",
+                             "Shapiro-Wilks test without Bonferroni Correction")))
+}
+
+shapiro_test_df(ks_vars_m)
+
+
+#OR just look at a Normal Q-Q plot for each variable in the data frame
+
+for (i in colnames(ks_vars_n))
+     {
+ 
+       normlpot <- qqnorm(ks_vars_n[,i])
+}
+    
+
+```
+
+
+
+WITHIN POPULATIONS
+Test correlation of variables for each population separately, then match up the variables that are left.
+Use KS test to compare distributions of variables between ENCOUNTERS in a population
+
+```{r}
+#Using the uncorrelated, continuous variables from the previous section, compare values between the encounters within the populations with the KS test again
+
+#For pairwise KS tests between encounters
+
+#Separate data by encounter
+
+
+
+
+
+
+```
+
+## Pairwise Mann-Whitney 
+```{r}
+MannWhitP <- pairwise.wilcox.test(pcdata.P_fmax$FREQMAX, pcdata.P_fmax$EncounterID, p.adjust.methods = "bonferroni")
+MannWhitP
+
+MannWhitP = MannWhitP$p.value
+
+#Convert it to a full table
+MannWhitP1 <- fullPTable(MannWhitP)
+MannWhitP1
+write.csv(MannWhitP1,'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\KruskalWallisTests\\Pc_MannWhitTests.csv', row.names = F)
+### Produce compact letter display. 
+### Values sharing a letter ARE NOT significantly different. Groups 'ab' are not significantly different from groups 'a' or 'b'
+library(multcompView)
+multcompLetters(MannWhitP1,
+                compare="<",
+                threshold=0.05,  # p-value to use as significance threshold
+                Letters=letters,
+                reversed = FALSE)
+
+```
+
+```{r}
+#Working with the uncorrelated data by population, subset it 
+
+mw_M <- pcdata.Muncorr[, -c(2, 4:6)]
+mw_M_results <- lapply(3:14, function(x) pairwise.wilcox.test(mw_M[[x]], mw_M$EncounterID, p.adjust.method = 'bonferroni'))
+names(mw_M_results) <- names(mw_M)[3:14]
+mw_M_results
+
+
+
+mw_N <- pcdata.Nuncorr[, -c(2, 4:6)]
+mw_N_results <- lapply(3:16, function(x) pairwise.wilcox.test(mw_N[[x]], mw_N$EncounterID, p.adjust.method = 'bonferroni'))
+names(mw_N_results) <- names(mw_N)[3:16]
+mw_N_results
+```
+
+out <- lapply(7:44, function(x) pairwise.wilcox.test(kwP_new[[x]], kwP_new$EncounterID, p.adjust.method = 'bonferroni'))
+names(out) <- names(kwP_new)[7:44]
+out

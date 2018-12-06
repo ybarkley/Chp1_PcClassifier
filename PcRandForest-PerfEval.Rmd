@@ -81,10 +81,13 @@ pcdata<- pcdata[, c(61, 1:60)]
 write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv', row.names=F)
 ```
 
+IGNORE THIS STEP SINCE THE CORRELATION STUFF IS INCLUDED IN EACH ITERATION OF THE RFS
 Correlation Stuff
 ```{r}
 ##Calculate Pearson's correlation coefficient for all variables. Remove #variables -0.70 > r > 0.70.
-pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180809.csv')
+#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180809.csv')
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+
 pcsub<-pcdata[,7:53]
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
@@ -103,7 +106,7 @@ pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
   pcdata <- cbind(pcdata[, c(1:6)], pcsubcor)
   corrplot.mixed(cor(pcdata[,7:31]), upper="circle", lower="number") # for a visual representation of the correlation
   
-write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv', row.names = F)  
+write.csv(pcdata, 'C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\pcdataUNCORRELATED_20181204.csv', row.names = F)  
   
 ```
 
@@ -113,16 +116,17 @@ write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_201
 ##Uncorrelated variables for all Random Forests
 #pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv')
 
-
-
 #Laptop directory
 #pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #desktop directory
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_2018914.csv')
+#pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_2018914.csv')
 
 #Remove MHI29, cluster 4
 #pcdata <-droplevels(filter(pcdata, EncounterID != 'PcMHI29'))
+
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -134,7 +138,7 @@ nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
-w = 150             # Number of whistles randomly pulled from each group 
+w = 100             # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 100        #Zack: number of times you want to resample from your dataset
 
@@ -454,9 +458,9 @@ seRealN <- se(realN)
 seRealM <- se(realM)
 
  
-date='20180824'
+date='20181204'
 #Combine means and std errors into matrix
-sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20180824.txt", append=T)
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20181204.txt", append=T)
 PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
 PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
 PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
@@ -466,7 +470,6 @@ w
 n_samps
 PNMtotal
 sink()
-
 
 
 #For saving to laptop 
@@ -490,21 +493,21 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_ConfusionMatrix_PMN_20181205.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalResults_PMN_20181205.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PMN_20180824.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalWhistleClass_PMN_20181205.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TrainSets_PMN_20181205.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TestResults_PMN_20181205.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_ImportantVars_PMN_20181205.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TunedParameters_PMN_20181205.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PMN_20180824.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalModels_PMN_20181205.csv", append = T, col.names=F, sep = ",")
 
 ```
  

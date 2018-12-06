@@ -5,6 +5,10 @@ This code plots the distribution of the ROCCA variables for each population to e
 library(dplyr)
 pcplot <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
+pcplot <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+
+
+
 pcplot$population = as.character(pcplot$population)
 pcplot$population[pcplot$population == 'mhi'] = "MHI"
 pcplot$population[pcplot$population == 'pel'] = "Pelagic"
@@ -205,11 +209,11 @@ color <- c('#35bb7c', 'black', '#947d51','#8576aa')
 
 
 #Plot Mean positive slope / duration
-freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.factor(population))) +
+freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(population))) +
   geom_boxplot() +
   theme_bw() +
   labs(x="Encounter", y="Frequency (Hz)", 
-       title="Mean Positive Slope") +
+       title="Frequency Spread") +
   theme(panel.background = element_rect(fill = "white"),
         plot.background = element_rect(fill = "white"),
         plot.title = element_text(size=20, hjust=0.5, face='bold'),
