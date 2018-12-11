@@ -8,7 +8,105 @@ This script plots the top 10 important variables factored by population and enco
 library(ggplot2)
 library(reshape2)
 library(stringr)
+library(dplyr)
 ```
+
+#12/10/18
+#Added method of extracting top 5 variables from each run
+
+```{r}
+#read in important variables spreadsheet
+
+top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ImportantVars_PMN_20181209_EDIT.csv")
+top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PN_100x/PcResults_ImportantVars_PN_20180824.csv")
+top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180822_PM_100x/PcResults_ImportantVars_PM_20180822_edit.csv")
+#Using dplyr functions
+
+top_vars$model <- 'RF_PNM'
+top_varsPN$model <- 'RF_PN'
+top_varsPM$model <- 'RF_PM'
+
+top_5 <- droplevels(top_vars %>%
+  group_by(Rep) %>%
+  top_n(n = 5, wt = MeanDecreaseAccuracy))
+
+top_5PN <- droplevels(top_varsPN %>%
+  group_by(Rep) %>%
+  top_n(n = 5, wt = MeanDecreaseAccuracy))
+
+top_5PM <- droplevels(top_varsPM %>%
+  group_by(Rep) %>%
+  top_n(n = 5, wt = MeanDecreaseAccuracy))
+
+top_5 <- top_5[,c(1,2,6)]
+top_5PN <- top_5PN[, c(1,2,5)]
+top_5PM <- top_5PM[, c(1,2,5)]
+
+top_5$model <- 'RF_PNM'
+top_5PN$model <- 'RF_PN'
+top_5PM$model <- 'RF_PM'
+
+top_5tab <- as.data.frame(sort(table(top_5$Variable)), decreasing = F)
+top_5tabPN <- as.data.frame(sort(table(top_5PN$Variable)), decreasing = F)
+top_5tabPM <- as.data.frame(sort(table(top_5PM$Variable)), decreasing = F)
+
+
+top_5tab$model <- 'RF_PNM'
+top_5tabPN$model <- 'RF_PN'
+top_5tabPM$model <- 'RF_PM'
+
+top_all< - rbind(top_5tab, top_5tabPN, top_5tabPM)
+top_all$Variable <- as.character(top_5$Variable)
+
+
+write.csv(top_5tab, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top5ImpVarsTABLE_PMN_20181209.csv", row.names = F)
+write.csv(top_5tabPN, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top5ImpVarsTABLE_PN_20181209.csv", row.names = F)
+write.csv(top_5tabPM, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top5ImpVarsTABLE_PM_20181209.csv", row.names = F)
+
+
+top_5tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top5ImpVarsTABLE_ALL_20181209.csv")
+
+#Create a plot to visually represent table
+#https://stackoverflow.com/questions/5804226/get-a-histogram-plot-of-factor-frequencies-summary
+# require(lattice)
+# with(top_5, dotplot(Variable, horizontal = FALSE))
+
+require(ggplot2)
+# make ROCCA.Variables an ordered factor
+
+#top_5tab$Var1 <- factor(top_5tab$Var1, levels = top_5tab$Var1) #Only works with one model config
+levels(top_5tab$model) <- c('RF_PNM', 'RF_PN', 'RF_PM')
+pch = c(8, 17, 15)
+
+
+p <- ggplot(top_5tab, aes(Var1, Freq)) + 
+     geom_point(aes(pch=factor(model), size=2)) +
+  
+  labs(title="Important Variables in the Top 5 Ranking", x = "Whistle Variable", y= 'Frequency') + 
+  theme_bw()+
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=12, angle = 90, hjust = 1), #5 for all encounters
+        axis.text.y=element_text(size=12), #8 for all encounters
+        plot.title=element_text(size=18, hjust=0.5, face="bold", colour="black", vjust=-1),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=14),
+        legend.title.align = 0.5,
+        axis.title = element_text(size=13, hjust=0.5))+
+   #use inkscape to mask stupid size legend
+  # scale_shape_manual(name='Model') +
+  scale_shape_manual(values = c(8, 24, 22),
+                     name='Model')
+  #scale_color_discrete(name='Model') #only works for colored points
+p 
+
+ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/PcResults_Top5ImpVarsTABLE_ALL_20181209-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+
+
+```
+
+
+
+
 
 #New Whistle Plots
 ```{r}
