@@ -11,6 +11,188 @@ library(stringr)
 library(dplyr)
 ```
 
+
+
+##12/12/18
+# Top 10 Variables instead of top 5
+
+```{r}
+#read in important variables spreadsheet
+
+top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ImportantVars_PMN_20181209_EDIT.csv")
+top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PN_100x/PcResults_ImportantVars_PN_20181209_edit.csv")
+top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PM_100x/PcResults_ImportantVars_PM_20181209_edit.csv")
+#Using dplyr functions
+
+
+
+top_10 <- droplevels(top_vars %>%
+  group_by(Rep) %>%
+  top_n(n = 10, wt = MeanDecreaseAccuracy))
+
+top_10PN <- droplevels(top_varsPN %>%
+  group_by(Rep) %>%
+  top_n(n = 10, wt = MeanDecreaseAccuracy))
+
+top_10PM <- droplevels(top_varsPM %>%
+  group_by(Rep) %>%
+  top_n(n = 10, wt = MeanDecreaseAccuracy))
+
+top_10 <- top_10[,c(1,2,6)]
+top_10PN <- top_10PN[, c(1,2,5)]
+top_10PM <- top_10PM[, c(1,2,5)]
+
+top_10$model <- 'RF_PNM'
+top_10PN$model <- 'RF_PN'
+top_10PM$model <- 'RF_PM'
+
+
+top_10all <- rbind(top_10, top_10PN, top_10PM)
+
+#Change variable names before tabulating
+top_10all$Variable[grep("DURATION", top_10all$Variable)] <- "Duration"
+top_10all$Variable[grep("FREQQUARTER3", top_10all$Variable)] <- "ThirdQuarterFreq"
+top_10all$Variable[grep("FREQSPREAD", top_10all$Variable)] <- "FreqSpread"
+top_10all$Variable[grep("FREQCOFM", top_10all$Variable)] <- "CoeffFreqMod"
+top_10all$Variable[grep("FREQPOSSLOPEMEAN", top_10all$Variable)] <- "MeanPosSlope"
+top_10all$Variable[grep("FREQNEGSLOPEMEAN", top_10all$Variable)] <- "MeanNegSlope"
+top_10all$Variable[grep("FREQSWEEPDWNPERCENT", top_10all$Variable)] <- "PctNegSlope"
+top_10all$Variable[grep("INFLMAXMINDELTA", top_10all$Variable)] <- "MaxInflTime/MinInflTime"
+top_10all$Variable[grep("INFLMEANDELTA", top_10all$Variable)] <- "MeanTimeBtwnInfl"
+top_10all$Variable[grep("INFLSTDDEVDELTA", top_10all$Variable)] <- "SDTimeBtwnInfl"
+top_10all$Variable[grep("FREQSWEEPFLATPERCENT", top_10all$Variable)] <- "PctZeroSlope"
+top_10all$Variable[grep("INFLMEANDELTA", top_10all$Variable)] <- "MeanTimeBtwnInfl"
+top_10all$Variable[grep("FREQABSSLOPEMEAN", top_10all$Variable)] <- "AbsSlopeMean"
+top_10all$Variable[grep("NUMSWEEPSFLATUP", top_10all$Variable)] <- "NumTimesZeroToPos"
+top_10all$Variable[grep("FREQSLOPEMEAN", top_10all$Variable)] <- "MeanSlope"
+top_10all$Variable[grep("NUMSWEEPSFLATUP", top_10all$Variable)] <- "NumTimesZeroToPos"
+top_10all$Variable[grep("FREQENDDWN", top_10all$Variable)] <- "BegDwnFreq"
+top_10all$Variable[grep("FREQMAXMINRATIO", top_10all$Variable)] <- "MaxMinRatio"
+top_10all$Variable[grep("NUMSWEEPSFLATDWN", top_10all$Variable)] <- "NumTimesZeroToNeg"
+top_10all$Variable[grep("NUMINFLECTIONS", top_10all$Variable)] <- "NumInfl"
+top_10all$Variable[grep("FREQMAXMINRATIO", top_10all$Variable)] <- "MaxMinRatio"
+top_10all$Variable[grep("FREQBEGDWN", top_10all$Variable)] <- "BegDwnFreq"
+top_10all$Variable[grep("FREQBEGENDRATIO", top_10all$Variable)] <- "BegEndRatioFreq"
+top_10all$Variable[grep("FREQENDUP", top_10all$Variable)] <- "UpEndFreq"
+top_10all$Variable[grep("FREQSLOPERATIO", top_10all$Variable)] <- "PosNegSlopeRatio"
+
+
+
+
+#subset them again by model...not sure if this is necessary
+top_10all$model <- as.factor(top_10all$model)
+
+top_10 <- top_10all[top_10all$model == 'RF_PNM',]
+top_10PN <- top_10all[top_10all$model == 'RF_PN',]
+top_10PM <- top_10all[top_10all$model == 'RF_PM',]
+
+
+#Find the range of each importance score of each variable for each model
+varmin <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), min)
+varmax <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), max)
+
+names(varmin)[names(varmin) == "x"] <- "Min"
+names(varmax)[names(varmax) == "x"] <- "Max"
+
+varRange <- cbind(varmin, "Max" =varmax$Max)
+write.csv(varRange, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\Variable Importance/PcResults_Top10ImpVars_Range.csv", row.names = F)
+
+
+top_10tab <- as.data.frame(sort(table(top_10$Variable)), decreasing = F)
+top_10tabPN <- as.data.frame(sort(table(top_10PN$Variable)), decreasing = F)
+top_10tabPM <- as.data.frame(sort(table(top_10PM$Variable)), decreasing = F)
+
+#Add model column back in
+top_10tab$model <- 'RF_PNM'
+top_10tabPN$model <- 'RF_PN'
+top_10tabPM$model <- 'RF_PM'
+
+top_10tab_all <- rbind(top_10tab, top_10tabPN, top_10tabPM)
+top_10tab_all$Var1 <- as.character(top_10tab_all$Var1)
+
+
+write.csv(top_10all, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_ALL_20181209.csv", row.names = F)
+write.csv(top_10tab, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PMN_20181209.csv", row.names = F)
+write.csv(top_10tabPN, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PN_20181209.csv", row.names = F)
+write.csv(top_10tabPM, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PM_20181209.csv", row.names = F)
+
+
+top_10tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_ALL_20181209.csv")
+
+#Create a plot to visually represent table
+#https://stackoverflow.com/questions/5804226/get-a-histogram-plot-of-factor-frequencies-summary
+# require(lattice)
+# with(top_5, dotplot(Variable, horizontal = FALSE))
+```
+
+```{r}
+require(ggplot2)
+# make ROCCA.Variables an ordered factor
+
+#top_5tab$Var1 <- factor(top_5tab$Var1, levels = top_5tab$Var1) #Only works with one model config
+top_10tab_all$model <- factor(as.character(top_10tab_all$model), levels=c('RF_PNM', 'RF_PN', 'RF_PM'))
+pch = c(8, 17, 15)
+
+
+p <- ggplot(top_10tab_all, aes(Var1, Freq)) + 
+     geom_point(aes(pch=factor(model), size=2)) +
+  
+  labs(title="Most Important Variables for Whistle Classification", x = "Whistle Variable", y= 'Number of  in Top 10') + 
+  theme_bw()+
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=12, angle = 90, hjust = 1), #5 for all encounters
+        axis.text.y=element_text(size=12), #8 for all encounters
+        plot.title=element_text(size=18, hjust=0.5, face="bold", colour="black", vjust=-1),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=14),
+        legend.title.align = 0.5,
+        axis.title = element_text(size=13, hjust=0.5))+
+   #use inkscape to mask stupid size legend
+  # scale_shape_manual(name='Model') +
+  scale_shape_manual(values = c(8, 24, 22),
+                     name='Model')
+  #scale_color_discrete(name='Model') #only works for colored points
+p 
+
+ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/PcResults_Top10ImpVarsTABLE_ALL_20181212-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+
+
+names(top_10tab_all)[names(top_10tab_all) == "Freq"] <- "Frequency"
+
+#heat map
+require(RColorBrewer)
+hm.palette <- colorRampPalette(rev(brewer.pal(11, 'Paired')), space='Lab')
+heat <- ggplot(top_10tab_all, aes(model, Var1)) + 
+        labs(x="", y="Whistle Variable", title = "Most Important Variables for Whistle Classification") +
+  theme(plot.background = element_rect(fill = "white"),
+        axis.text.x=element_text(size=15, angle = 90, hjust = 1, colour = 'black'), #5 for all encounters
+        axis.text.y=element_text(size=12), #8 for all encounters
+        plot.title=element_text(size=25, hjust=0.5, face="bold", colour="black"),
+        legend.text = element_text(size=12),
+        legend.title = element_text(size=14),
+        legend.title.align = 0.5,
+        axis.title = element_text(size=13, hjust=0.5 , vjust = -1, face="bold"))+
+        geom_tile(aes(fill=Frequency), colour = "grey") + 
+        theme_bw() +
+        scale_fill_gradient2(low='white', mid = 'grey', high = 'black', midpoint = 50, limits=range(top_10tab_all$Freq))
+heat  
+#scale_fill_gradientn(colours = hm.palette(100))  
+#scale_fill_gradientn(palette = "Greys")
+
+#
+
+ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/PcResults_Top10ImpVarsTABLE_ALL_20181213_HeatMap.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+
+#Heat map from rfpermute
+
+impHeatmap(fit, n = NULL, ranks = TRUE, plot = TRUE, xlab = NULL, ylab = NULL, scale = TRUE, alpha = 0.05)
+
+
+```
+
+
+
+
 #12/10/18
 #Added method of extracting top 5 variables from each run
 

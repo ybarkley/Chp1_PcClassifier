@@ -355,7 +355,7 @@ realM <- c(realM,results.temp[3,3])
 
 
 
-
+##############
 #Set a threshold for the percentage of whistles that must be correctly classified to classify the population
 true.pel = if(results.temp[1,1] >= t*w) 'Pelagic' else 'Ambiguous'
 pel.nwhi = if(results.temp[1,2] >= t*w) 'NWHI' else 'Ambiguous'

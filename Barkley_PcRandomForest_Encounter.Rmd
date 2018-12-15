@@ -28,9 +28,13 @@ library(ggplot2)
 # pcdata <- droplevels(filter(pcdata, population != "nwhi"))
 
 #7/20/18
-pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\pcdata.pm_uncorrelated_20180717.csv')
+#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\pcdata.pm_uncorrelated_20180717.csv')
 
-PEL = 1:7                # designated groupID's assigned for each pelagic group 
+#12/13/18
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+
+
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
 NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
 MHI = 31:34    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
                               # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
@@ -41,7 +45,7 @@ nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 w = 150              # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 10        #Zack: number of times you want to resample from your dataset
+n_samps = 2       #Zack: number of times you want to resample from your dataset
 prop = 0.5          #proportion of whistles in training data
 ```
 
@@ -61,6 +65,9 @@ pcsubcor_M <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 pcdata.Muncorr <- cbind(pcdata.M[, c(1:6)], pcsubcor_M)
 
+levels(pcdata.Muncorr$EncounterID) <- c("M1", "M2", "M3", "M4" )
+
+
 ```
 
 ##NWHI correlation
@@ -74,6 +81,8 @@ diag(tmp) <- 0
 pcsubcor_N <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 pcdata.Nuncorr <- cbind(pcdata.N[, c(1:6)], pcsubcor_N)
+
+levels(pcdata.Nuncorr$EncounterID) <- c("N1", "N2", "N3", "N4" )
 
 ```
 
@@ -89,6 +98,9 @@ pcsubcor_P <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
 
+levels(pcdata.Puncorr$EncounterID) <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8" )
+
+
 ```
 
 
@@ -99,7 +111,7 @@ pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
 
 ptm <- proc.time()
 
-results.enc = matrix(0, nrow = 8, ncol = 8) #based on total # of groups
+results.enc = matrix(0, nrow = 4, ncol = 4) #based on total # of groups
 realP = c()
 fakeP = c()
 realM = c()
@@ -124,8 +136,8 @@ for(rep in 1:n_samps){
   
 #From all of the encounters, sampling prop whistles from each encounter
 enc_all = NULL
-for(i in c(PEL)){
-  enc_sub=droplevels(subset(pcdata.Puncorr, pcdata.Puncorr$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+for(i in c(NWHI)){
+  enc_sub=droplevels(subset(pcdata.Nuncorr, pcdata.Nuncorr$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
   enc_samp=enc_sub[sample(nrow(enc_sub), w),] #randomly samples w whistles from total whistles
   enc_all <-rbind(enc_all, enc_samp)
   
@@ -155,7 +167,7 @@ registerDoParallel(cl, cores = detectCores())
 ##Create the formula for the RF model with 'population' as the response and time-frequency measurements from uncorrelated data as the covariates
 ############################################
 #formPc.new <- as.formula(paste("population ~ ", paste(names(pcnew)[7:36],collapse="+")))
-formPc_enc <- as.formula(paste("EncounterID ~ ", paste(names(pcdata.Puncorr)[7:length(enc_all)],collapse="+"))) #Use variables to classify to encounter
+formPc_enc <- as.formula(paste("EncounterID ~ ", paste(names(pcdata.Nuncorr)[7:length(enc_all)],collapse="+"))) #Use variables to classify to encounter
 
 #######################################
 ##The foreach function is the loop function for parallel processing. 
@@ -221,9 +233,9 @@ proc.time()-ptm
 ```
 
 ```{r}
-write.table(results.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_ENC_MHI/PcResults_Encounters_TotalResults_PEL_20181205.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(results.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181213_ENCOUNTERS/PcResults_Encounters_TotalResults_NWHI_20181213.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(varIMPtotal.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_ENC_MHI/PcResults_Encounters_PEL_ImpVar_20181205.csv', sep=",", append=TRUE)
+write.table(varIMPtotal.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181213_ENCOUNTERS/PcResults_Encounters_NWHI_ImpVar_20181213.csv', sep=",", append=TRUE)
 
 
 
@@ -252,3 +264,5 @@ falsehope <- c(falsehope, false)
 
 
 ```
+
+
