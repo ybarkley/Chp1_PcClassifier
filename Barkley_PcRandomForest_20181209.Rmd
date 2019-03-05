@@ -136,12 +136,14 @@ MHI = 31:34
 #This is set up to be flexible to change later if needed
 nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
-nnwhi = 1           # number of northwest HI schools to group together
-nmhi  = 1           # number of main HI schools to group together
+nnwhi = 1           # number of NWHI schools to group together
+nmhi  = 1           # number of MHI schools to group together
 w = 150             # Number of whistles randomly pulled from each group 
 t= 0.5              # threshold for classification
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 1        #Zack: number of times you want to resample from your dataset
+```
+```{r}
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
@@ -266,7 +268,7 @@ all <- cbind(all[, c(1:6)], pcsubcor)
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 5:8
+mtry_vals = 7
 ntree_vals = seq(500,5000,500) #from, to, by
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
@@ -483,21 +485,21 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ConfusionMatrix_PMN_20181209.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "data/results/PcResults_ConfusionMatrix_PMN_20190304.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TotalResults_PMN_20181209.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "data/results/PcResults_TotalResults_PMN_20190304.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TotalWhistleClass_PMN_20181209.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "data/results/PcResults_TotalWhistleClass_PMN_20190304.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TrainSets_PMN_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll, "data/results/PcResults_TrainSets_PMN_20190304.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TestResults_PMN_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll, "data/results/PcResults_TestResults_PMN_20190304.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ImportantVars_PMN_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal, "data/results/PcResults_ImportantVars_PMN_20190304.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TunedParameters_PMN_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll, "data/results/PcResults_TunedParameters_PMN_20190304.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_TotalModels_PMN_20181209.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "data/results/PcResults_TotalModels_PMN_20190304.csv", append = T, col.names=F, sep = ",")
 
 ```
  
