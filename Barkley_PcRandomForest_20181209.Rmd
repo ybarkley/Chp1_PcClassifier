@@ -141,7 +141,7 @@ nmhi  = 1           # number of main HI schools to group together
 w = 150             # Number of whistles randomly pulled from each group 
 t= 0.5              # threshold for classification
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 100        #Zack: number of times you want to resample from your dataset
+n_samps = 1        #Zack: number of times you want to resample from your dataset
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
