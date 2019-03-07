@@ -12,6 +12,8 @@ output:
 This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+##Load Packages
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
@@ -141,7 +143,7 @@ nmhi  = 1           # number of MHI schools to group together
 w = 150             # Number of whistles randomly pulled from each group 
 t= 0.5              # threshold for classification
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 1        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 ```
 ```{r}
 
@@ -234,7 +236,7 @@ for(rep in 1:n_samps){
   all = NULL
   for(i in c(N_pel,N_nwhi,N_mhi)){
     sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
-    samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
+    samp=sub[sample(nrow(sub), w),] #randomly samples w whistles 
     all <-rbind(all, samp)
     
     }
@@ -268,7 +270,7 @@ all <- cbind(all[, c(1:6)], pcsubcor)
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 7
+mtry_vals = sqrt(length(all[,7:length(all)])) #5:8 improves results by 1-2% overall 
 ntree_vals = seq(500,5000,500) #from, to, by
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)

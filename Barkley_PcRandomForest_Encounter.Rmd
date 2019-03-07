@@ -5,6 +5,11 @@ date: "April 16, 2018"
 output: html_document
 ---
 
+```{r setup}
+    knitr::opts_knit$set(root.dir = normalizePath("C:\\Users\\yvers\\Documents\\CHP 1\\code\\Chp1_PcClassifier")) 
+```
+
+
 ```{r warning=FALSE, message=FALSE}
 library(sqldf)
 library(randomForest)
@@ -19,35 +24,14 @@ library(dplyr)
 library(data.table)
 library(ggplot2)
 
+pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+pcdata.M <- droplevels(filter(pcdata, pcdata$population == 'MHI'))
+pcdata.N <- droplevels(filter(pcdata, pcdata$population == 'NWHI'))
+pcdata.P <- droplevels(filter(pcdata, pcdata$population == 'PEL'))
 
 ```
 
-```{r}
-#pcdata <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\Chp1_PcClassifier-master\\BIG ROCCA FILE.csv')
-# pcdata <-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/BIG ROCCA FILE.csv')
-# pcdata <- droplevels(filter(pcdata, population != "nwhi"))
 
-#7/20/18
-#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180717\\pcdata.pm_uncorrelated_20180717.csv')
-
-#12/13/18
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
-
-
-PEL = 1:8                # designated groupID's assigned for each pelagic group 
-NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
-MHI = 31:34    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
-                              # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
-#This is set up to be flexible to change later if needed
-#nrep  = 3          # 7/1/18, no need, running all groups 
-npel  = 1           # number of pelagic schools to group together
-nnwhi = 1           # number of northwest HI schools to group together
-nmhi  = 1           # number of main HI schools to group together
-w = 150              # Number of whistles randomly pulled from each group 
-ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2       #Zack: number of times you want to resample from your dataset
-prop = 0.5          #proportion of whistles in training data
-```
 
 
 Test correlation of variables for each POPULATION separately 
@@ -56,7 +40,8 @@ Then run Random Forests for each POPULATION
 ##MHI correlation
 ```{r}    
 #Using only continuous variables, determine the correlated variables within the MHI whistles
-pcsub<-pcdata.M[,7:37]
+pcdata.M <- droplevels(filter(pcdata, pcdata$population == 'MHI'))
+pcsub<-pcdata.M[,7:53]
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
 tmp[upper.tri(tmp)] <- 0
@@ -73,7 +58,7 @@ levels(pcdata.Muncorr$EncounterID) <- c("M1", "M2", "M3", "M4" )
 ##NWHI correlation
 ```{r}    
 #Using only continuous variables, determine the correlated variables within the NWHI whistles
-pcsub<-pcdata.N[,7:37]
+pcsub<-pcdata.N[,7:53]
 #corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
 tmp[upper.tri(tmp)] <- 0
@@ -82,14 +67,14 @@ pcsubcor_N <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
 pcdata.Nuncorr <- cbind(pcdata.N[, c(1:6)], pcsubcor_N)
 
-levels(pcdata.Nuncorr$EncounterID) <- c("N1", "N2", "N3", "N4" )
+#levels(pcdata.Nuncorr$EncounterID) <- c("N1", "N2", "N3", "N4" )
 
 ```
 
 ##Pelagic correlation
 ```{r}    
 ##Using only continuous variables, determine the correlated variables within the Pelagic whistles
-pcsub<-pcdata.P[,7:37]
+pcsub<-pcdata.P[,7:53]
 #corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
 tmp[upper.tri(tmp)] <- 0
@@ -103,11 +88,32 @@ levels(pcdata.Puncorr$EncounterID) <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7"
 
 ```
 
+```{r}
+
+pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
 
 
+PEL = 1:8                # designated groupID's assigned for each pelagic group 
+NWHI  = 14:17   # designated groupID's assigned for each NWHI group, #20 was absorbed into #19 (June 2017)     
+MHI = 31:34    # designated groupID's assigned for each MHI group, #25 absorbed into #26 (June 2017) 
+                              # Oct 7: more combining of NWHI and MHI occurred. Performed in Pc_DatManipulation.rmd
+#This is set up to be flexible to change later if needed
+#nrep  = 3          # 7/1/18, no need, running all groups 
+npel  = 1           # number of pelagic schools to group together
+nnwhi = 1           # number of northwest HI schools to group together
+nmhi  = 1           # number of main HI schools to group together
+w = 150              # Number of whistles randomly pulled from each group 
+ntest = 1           # number of groups to randomly pull for test dataset
+n_samps = 100       #Zack: number of times you want to resample from your dataset
+prop = 0.75          #proportion of whistles in training data
+```
+
+##Random Forest
 ```{r}
 ####Start####
-
+today = 20190306
+POP = NWHI
+pop.data = pcdata.Nuncorr
 
 ptm <- proc.time()
 
@@ -136,8 +142,8 @@ for(rep in 1:n_samps){
   
 #From all of the encounters, sampling prop whistles from each encounter
 enc_all = NULL
-for(i in c(NWHI)){
-  enc_sub=droplevels(subset(pcdata.Nuncorr, pcdata.Nuncorr$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+for(i in c(POP)){
+  enc_sub=droplevels(subset(pop.data, pop.data$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
   enc_samp=enc_sub[sample(nrow(enc_sub), w),] #randomly samples w whistles from total whistles
   enc_all <-rbind(enc_all, enc_samp)
   
@@ -153,7 +159,7 @@ enc_test <- enc_all[-enc_part,]
 ## Set up a dataframe where each row is a specific 
 ## combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
 ##############################
-mtry_vals = 5:8 
+mtry_vals = sqrt(length(enc_all[,7:length(enc_all)])) 
 ntree_vals = seq(501,5001,500) #from, to, by
 tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
@@ -167,7 +173,7 @@ registerDoParallel(cl, cores = detectCores())
 ##Create the formula for the RF model with 'population' as the response and time-frequency measurements from uncorrelated data as the covariates
 ############################################
 #formPc.new <- as.formula(paste("population ~ ", paste(names(pcnew)[7:36],collapse="+")))
-formPc_enc <- as.formula(paste("EncounterID ~ ", paste(names(pcdata.Nuncorr)[7:length(enc_all)],collapse="+"))) #Use variables to classify to encounter
+formPc_enc <- as.formula(paste("EncounterID ~ ", paste(names(pop.data)[7:length(enc_all)],collapse="+"))) #Use variables to classify to encounter
 
 #######################################
 ##The foreach function is the loop function for parallel processing. 
@@ -232,14 +238,17 @@ results.enc <- results.enc + enc_results.temp
 proc.time()-ptm
 ```
 
+
 ```{r}
-write.table(results.enc, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181213_ENCOUNTERS/PcResults_Encounters_TotalResults_NWHI_20181213.csv", append = T, row.names = T, col.names=T, sep = ",")
-
-write.table(varIMPtotal.enc, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181213_ENCOUNTERS/PcResults_Encounters_NWHI_ImpVar_20181213.csv', sep=",", append=TRUE)
 
 
+fn = sprintf("_%s_%s.csv", unique(pop.data$population), today)
 
-#enc_pred.table<-rbind(enc_pred.table, rep, enc_results, accuracy2=signif(accuracy2, digits = 3)) #rough table keeping track of confusion matrices for all iterations
+write.table(results.enc, file= paste('PcResults_Encounters_TotalResults', fn, sep=""), append = T, row.names = T, col.names=T, sep = ",")
+
+write.table(varIMPtotal.enc, paste('PcResults_Encounters_ImpVar',fn,sep=""), sep=",", append=TRUE)
+
+
 
 
             
