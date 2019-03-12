@@ -327,8 +327,8 @@ tunedAll <- rbind(tunedAll, tuned)
 
 #### Run Random Forest ####
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-  fit <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=F, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
-
+  fit <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=F, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=F, proximity=T, keep.forest=T, scale = F) 
+ #fitranger <- ranger(formPc, data=train, num.trees = tuned[1,2], importance = T, replace = F, mtry = tuned[1,1])
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
   prediction <-predict(fit, newdata=test, predict.all = F, type='response') 
   prediction.vote <-predict(fit, newdata=test, predict.all = T, type='vote')

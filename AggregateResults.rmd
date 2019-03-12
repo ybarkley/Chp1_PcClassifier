@@ -10,40 +10,31 @@ Use aggregate function to complete various analyses of the test results.
 ```{r}
 library(plyr)
 library(reshape2)
-library(dplyr)
+
+
+today = 20190312
+model = 'PMN'
+
 #Import PcResults_TestResults csv for the classifier
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PMN_100x/PcResults_TestResults_PMN_20180824.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PMN_20181209.csv')
 
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PN_100x/PcResults_TestResults_PN_20180824.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PN_20181209.csv')
 
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180822_PM_100x/PcResults_TestResults_PM_20180822.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PM_20181209.csv')
 
 #1. How many times was each acoustic encounter represented in the test data?
 AcEncs_Test <- aggregate(x = agg_data, 
                                by = list(unique.values = agg_data$EncounterID), 
                                FUN = length)
-#Same result as using 'aggregate'
-#count(agg_data$EncounterID) #func 'count' from plyr package conflicts with dplyr
-
-#2. How many times were the populations classified correctly using a threshold of >=50%?
-#count(agg_data$EncounterClass)
-# 1 Ambiguous  222
-# 2       MHI   58
-# 3      NWHI    8
-# 4   Pelagic   12
-
-#Get frequencies for every value and every variable in df
-#lapply(agg_data, count)
 
 
-### THIS WORKS!! ####
-#Loop the subsetting to sum up things 
+#2. Loop the subsetting to sum up things 
 IDs <- unique(agg_data$EncounterID)
 filtByEnc = NULL
 filtCorrect = NULL
 for (k in 1:length(IDs)){
   temp <- agg_data[agg_data$EncounterID==IDs[k], ]
-  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$PctCorrect >= 60)) #change to 50 for PNM model, and Pct.Correct
+  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$CorrectDW >= 75)) #change to 50 for PNM model, 60 for pairwise models
   filtCorrect = rbind(filtCorrect, correct)
   filtByEnc = rbind(filtByEnc, temp)
 }
@@ -59,15 +50,9 @@ agg_data_sum <- cbind(filtCorrect, "y" = AcEncs_Test$rep)
 #library(dplyr)
 agg_data_sum <- mutate(agg_data_sum, new = x/y)
 
-
-write.csv(agg_data_sum,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_AggregatedTestResults_PM_20180830.csv', row.names = F )
+fn = sprintf("_%s_%s.csv", model, today)
+write.csv(agg_data_sum, file= paste('PcResults_AggregatedTestResults', fn, sep=""), row.names = F )
 write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
-#If needed
-#Get frequencies for every value and every variable in df
-lapply(agg_data, count)
-
-
-
 
 
 ```
