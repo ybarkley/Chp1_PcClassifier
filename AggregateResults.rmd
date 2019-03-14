@@ -14,6 +14,7 @@ library(reshape2)
 
 today = 20190312
 model = 'PMN'
+thld = 50  # Equates to a threshold of the number of whistles that must be correctly classified to classify the encounter to the correct population. For example, 50 is 33% of 150 whistles, then 75 is 50% for pairwise classifiers.
 
 #Import PcResults_TestResults csv for the classifier
 agg_data <- read.csv('data/PcResults_TestResults_PMN_20181209.csv')
@@ -34,7 +35,7 @@ filtByEnc = NULL
 filtCorrect = NULL
 for (k in 1:length(IDs)){
   temp <- agg_data[agg_data$EncounterID==IDs[k], ]
-  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$CorrectDW >= 75)) #change to 50 for PNM model, 60 for pairwise models
+  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$CorrectDW > thld))
   filtCorrect = rbind(filtCorrect, correct)
   filtByEnc = rbind(filtByEnc, temp)
 }
@@ -51,7 +52,7 @@ agg_data_sum <- cbind(filtCorrect, "y" = AcEncs_Test$rep)
 agg_data_sum <- mutate(agg_data_sum, new = x/y)
 
 fn = sprintf("_%s_%s.csv", model, today)
-write.csv(agg_data_sum, file= paste('PcResults_AggregatedTestResults', fn, sep=""), row.names = F )
+write.csv(agg_data_sum, file= paste('PcResults_AggregatedTestResults_MajorityVote', fn, sep=""), row.names = F )
 write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
 
 

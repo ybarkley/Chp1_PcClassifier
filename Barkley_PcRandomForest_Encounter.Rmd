@@ -278,29 +278,30 @@ write.table(results.enc, file= paste('PcResults_Encounters_TotalResults', fn, se
 
 write.table(varIMPtotal.enc, paste('PcResults_Encounters_ImpVar',fn,sep=""), sep=",", append=TRUE)
 
-
-
-
-            
-# enc.whistles<-data.frame("group"=enc_test$EncounterID, "prediction"=enc_prediction, "whistle"=enc_test$whistle_count) #need 'whistle_count' column in df
-
 false=nrow(subset(enc_test, enc_test$rightPred=='FALSE'))/nrow(enc_test)*100 #percentage of misclassified whistles
 falsehope <- c(falsehope, false)
 
-## OUTPUTS ####
-#   d.enc = as.data.frame(unique(enc_test$id))
-#   d.enc = as.data.frame(as.character(d.enc[27, ]))
-#   e.enc=c()
-#   e.enc=as.data.frame(rbind(true.pel.array))#, true.nwhi.array))
-#   e.enc=cbind(e.enc, d.enc)
-#   colnames(e.enc) = c("Classification", "EncounterID")
-#   
-# f.array=as.data.frame(cbind(prediction.array.vote$aggregate, prediction.array.vote$individual))
-# g.array=cbind(enc, "population"=array.test$population, "group"=array.test$group, whistle=array.test$whistle_count, "prediction"=array.test$rightPred, f.array)
-# 
-# output_VotesAll.array <- bind_rows(output_VotesAll.array, g.array)
+```
+Kappa Calculations
+```{r}
+confmat <- read.csv('data/results/PcResults_Encounters_TotalResults_MHI_20190312.csv', header=T, row.names = 1)
 
+#matrix dimensions
+# m = 4
+# n = 5
 
+confmat2 = as.matrix(confmat)
+total_obs = sum(confmat2[ , ])
+
+#Observed Accuracy
+obs_acc <- sum(diag(confmat2))/total_obs
+
+#Expected Accuracy
+exp_acctemp <- (colSums(confmat2)*rowSums(confmat2))/total_obs
+exp_acc <- sum(exp_acctemp)/total_obs
+
+#kappa coefficient
+k = (obs_acc-exp_acc)/(1-exp_acc)
 
 ```
 
