@@ -90,7 +90,7 @@ pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
 ```
 
 
-
+##Run KS Tests
 ```{r}
 #create dataframe combining uncorrelated variables and population column
 pcsubcor_M <- cbind('population' = pcdata.Muncorr[,1], pcdata.Muncorr[,c(7:length(pcdata.Muncorr))])
@@ -122,7 +122,7 @@ ks_vars_n <- pcsubcor_N[, idx_M]
 ks_vars_m <- ks_vars_m[, -1]
 ks_vars_n <- ks_vars_n[, -1]
 
-# MHI vs NWHI
+####MHI vs NWHI####
 ks_resultsMN = NULL
 #names_ks <-names(ks_vars_m)
 
@@ -138,11 +138,11 @@ for (i in colnames(ks_vars_m))
     
        }
   colnames(ks_resultsMN) <- c("variable", "statistic", "p.value")   
-comparison = 'MN'
+comparison = 'NWHI-MHI'
 ks_resultsMN <- cbind(ks_resultsMN, comparison) 
 
 
-##MHI vs Pelagic##
+####MHI vs Pelagic####
 idx_M2 <- na.omit(match(vars_M, vars_P)) 
 idx_P <- na.omit(match(vars_P, vars_M))
 
@@ -169,10 +169,10 @@ for (i in colnames(ks_vars_m2))
     
        }
   colnames(ks_resultsMP) <- c("variable", "statistic", "p.value") 
-comparison = 'MP'
+comparison = 'Pelagic-MHI'
 ks_resultsMP <- cbind(ks_resultsMP, comparison)  
 
-##Pelagic vs NWHI##
+####Pelagic vs NWHI####
 idx_P <- na.omit(match(vars_P, vars_N))
 idx_N2 <- na.omit(match(vars_N, vars_P)) 
 
@@ -199,16 +199,19 @@ for (i in colnames(ks_vars_p))
        }
   colnames(ks_resultsPN) <- c("variable", "statistic", "p.value") 
   
-  comparison = 'PN'
+  comparison = 'Pelagic-NWHI'
   ks_resultsPN <- cbind(ks_resultsPN, comparison)
 ```
-  
+
+
+##Format KS dataframe  
 ```{r}  
 #Combine all ks results into one data frame, pvalues are factors!
 ks <- as.data.frame(rbind(ks_resultsMN, ks_resultsMP, ks_resultsPN))
 ks$p.value <- as.numeric(levels(ks$p.value))[ks$p.value]
+
 ks$variable <- as.character(ks$variable)
-levels(ks$comparison) <- c('Pelagic-NWHI', 'Pelagic-MHI', 'NWHI-MHI')
+#levels(ks$comparison) <- c('NWHI-MHI','Pelagic-MHI','Pelagic-NWHI')
 
 #change comparison labels and order the levels
 # ks$comparison[grep("MN", ks$comparison)] <- "NWHI-MHI"
@@ -217,37 +220,34 @@ levels(ks$comparison) <- c('Pelagic-NWHI', 'Pelagic-MHI', 'NWHI-MHI')
 # 
 # ks$comparison <- factor(as.character(ks$comparison), levels=c("Pelagic-NWHI", 'Pelagic-MHI', 'NWHI-MHI'))
 
-##For plotting all variables to show signif and non-signif
+##For plotting all variables to test significance
 ks$variable[grep("DURATION", ks$variable)] <- "Duration"
 ks$variable[grep("FREQQUARTER3", ks$variable)] <- "ThirdQuarterFreq"
 ks$variable[grep("FREQSPREAD", ks$variable)] <- "FreqSpread"
 ks$variable[grep("FREQCOFM", ks$variable)] <- "CoeffFreqMod"
+#ks$variable[grep("FREQMAXMINRATIO", ks$variable)] <- "MaxMinRatio"
+ks$variable[grep("FREQSLOPEMEAN", ks$variable)] <- "MeanSlope"
+ks$variable[grep("FREQABSSLOPEMEAN", ks$variable)] <- "AbsSlopeMean"
 ks$variable[grep("FREQPOSSLOPEMEAN", ks$variable)] <- "MeanPosSlope"
 ks$variable[grep("FREQNEGSLOPEMEAN", ks$variable)] <- "MeanNegSlope"
+ks$variable[grep("FREQSLOPERATIO", ks$variable)] <- "PosNegSlopeRatio"
+# ks$variable[grep("FREQBEGDWN", ks$variable)] <- "BegDwnFreq"
+# ks$variable[grep("FREQENDUP", ks$variable)] <- "UpEndFreq"
+# ks$variable[grep("FREQENDDWN", ks$variable)] <- "EndDwnFreq"
+# ks$variable[grep("NUMSWEEPSFLATUP", ks$variable)] <- "NumTimesZeroToPos"
 ks$variable[grep("FREQSWEEPDWNPERCENT", ks$variable)] <- "PctNegSlope"
-ks$variable[grep("INFLMAXMINDELTA", ks$variable)] <- "MaxInflTime/MinInflTime"
+ks$variable[grep("FREQSWEEPFLATPERCENT", ks$variable)] <- "PctZeroSlope"
+#ks$variable[grep("NUMSWEEPSFLATDWN", ks$variable)] <- "NumTimesZeroToNeg"
+#ks$variable[grep("NUMINFLECTIONS", ks$variable)] <- "NumInfl"
+#ks$variable[grep("FREQBEGENDRATIO", ks$variable)] <- "BegEndRatioFreq"
+ks$variable[grep("INFLMAXMINDELTA", ks$variable)] <- "MaxMinInflTimeRatio"
 ks$variable[grep("INFLMEANDELTA", ks$variable)] <- "MeanTimeBtwnInfl"
 ks$variable[grep("INFLSTDDEVDELTA", ks$variable)] <- "SDTimeBtwnInfl"
-ks$variable[grep("FREQSWEEPFLATPERCENT", ks$variable)] <- "PctZeroSlope"
-ks$variable[grep("INFLMEANDELTA", ks$variable)] <- "MeanTimeBtwnInfl"
-ks$variable[grep("FREQABSSLOPEMEAN", ks$variable)] <- "AbsSlopeMean"
-ks$variable[grep("NUMSWEEPSFLATUP", ks$variable)] <- "NumTimesZeroToPos"
-ks$variable[grep("FREQSLOPEMEAN", ks$variable)] <- "MeanSlope"
-ks$variable[grep("NUMSWEEPSFLATUP", ks$variable)] <- "NumTimesZeroToPos"
-ks$variable[grep("FREQENDDWN", ks$variable)] <- "BegDwnFreq"
-ks$variable[grep("FREQMAXMINRATIO", ks$variable)] <- "MaxMinRatio"
-ks$variable[grep("NUMSWEEPSFLATDWN", ks$variable)] <- "NumTimesZeroToNeg"
-ks$variable[grep("NUMINFLECTIONS", ks$variable)] <- "NumInfl"
-ks$variable[grep("FREQMAXMINRATIO", ks$variable)] <- "MaxMinRatio"
-ks$variable[grep("FREQBEGDWN", ks$variable)] <- "BegDwnFreq"
-ks$variable[grep("FREQBEGENDRATIO", ks$variable)] <- "BegEndRatioFreq"
-ks$variable[grep("FREQENDUP", ks$variable)] <- "UpEndFreq"
-ks$variable[grep("FREQSLOPERATIO", ks$variable)] <- "PosNegSlopeRatio"
 
 
 
 
-#write.csv(ks, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results/2018/20181125_KS Tests/KStests_ALL.csv', row.names = F)
+write.csv(ks, 'data/results/KStests_ALL_20190318.csv', row.names = F)
 ```
 
 ```{r}
@@ -286,15 +286,30 @@ ks_sig$variable[grep("FREQSLOPERATIO", ks_sig$variable)] <- "PosNegSlopeRatio"
 write.csv(ks_sig, 'C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results/2018/20181125_KS Tests/KStests_SIGNIF_ALL.csv', row.names = F)
 ```
 
+
+#Plot KS test results
 ```{r}
+## Make plot showing how the variables differ between populations
+
+# Load data
+# ks <- read.csv('data/results/KStests_ALL_20190318.csv')
+# 
+
+#Since taking the log of the pvalues, log(0) = inf, which creates problems for plot.
+#Here, replace zero with 1e-22
+ks$p.value <-as.character(ks$p.value)
+ks$p.value[ks$p.value == 0] <- '1e-22'
+ks$p.value <-as.numeric(ks$p.value)
+ks$comparison <- factor(ks$comparison, levels = c("Pelagic-NWHI","Pelagic-MHI" ,"NWHI-MHI"))
 
 
-require(ggplot2)
+# require(ggplot2)
+
 p_ks <- ggplot(ks, aes(p.value, variable)) + 
-     geom_point(aes(pch=factor(comparison)), size=4.5) +
-  
-  labs(title="Kolmogorov-Smirnov Test Results", x = "P-Value", y= 'Whistle Variable') + 
-  xlim(min(ks$p.value), 1)+
+     geom_point(aes(pch=factor(comparison)), size=4.5)+
+     
+  labs(title="Kolmogorov-Smirnov Test Results", x = "p-value", y= 'Whistle Variable') + 
+  xlim(-1, 1)+
   theme_bw()+
   theme(plot.background = element_rect(fill = "white"),
         axis.text.x=element_text(size=12, angle = 90, hjust = 1), #5 for all encounters
@@ -305,15 +320,18 @@ p_ks <- ggplot(ks, aes(p.value, variable)) +
         legend.title.align = 0.5,
         axis.title = element_text(size=13, hjust=0.5))+
    #use inkscape to mask stupid size legend
-  # scale_shape_manual(name='Model') +
-  scale_shape_manual(values = c(20,1,8),
-                     name='Comparison')
-  #scale_color_discrete(name='Model') #only works for colored points
+    scale_shape_manual(values = c(20,1,8),
+                     name='Comparison')+ 
+  scale_x_log10()#(breaks = c(0,1e-10,1e-5,.05,.75,1)) 
+#scale_color_discrete(name='Model') #only works for colored points
 p_ks + guides(shape = guide_legend(override.aes = list(size = 5)))+
        geom_vline(xintercept=0.05, linetype='dashed', color='red', size=1)
 
 
-ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/KS TEST_20181212-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/KS TEST_20190319-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+
+#plot(ks$p.value, ks$variable, log='x' )
+
 
 ```
 

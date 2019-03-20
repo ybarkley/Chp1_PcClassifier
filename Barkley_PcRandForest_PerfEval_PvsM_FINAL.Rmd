@@ -14,7 +14,7 @@ This script creates random forests using whistle datasets (either old or new dat
 
 # Load your libraries
 ```{r warning=FALSE, message=FALSE}
-library(sqldf)
+#library(sqldf)
 library(randomForest)
 library(partykit)
 library(caret)
@@ -552,29 +552,23 @@ write.table(tunedAll.pm, "C://Users//Yvonne//Documents//PHD//CHP1-FKW//data//res
 
 #Variance 
 ```{r}
-
+#Load file with all confusion matrices for each trial
 my_data <- read.csv('data/results/PcResults_TotalResults_PM_20181209.csv')
 
-my_data_p <- filter(my_data, X == 'Pelagic' )
+#Create separate objects with correct scores for each population
+my_data_p <- filter(my_data, X == 'Pelagic' ) 
 my_data_p <- my_data_p[,-1]
-my_data_n <- filter(my_data, X == 'NWHI')
-my_data_n <- my_data_n[,-1]
 my_data_m <- filter(my_data, X == 'MHI')
 my_data_m <- my_data_m[,-1]
 
-#Variance of correct classifcations (diagonal)
-my_var_p <- var(apply(my_data_p, 1, function(x) x[1]/sum(x[1],x[2],x[3])))
-my_var_n <- var(apply(my_data_n, 1, function(x) x[2]/sum(x[1],x[2],x[3])))
-my_var_m <- var(apply(my_data_m, 1, function(x) x[3]/sum(x[1],x[2],x[3])))
+#Variance of correct classifications (diagonal)
+my_var_p <- var(apply(my_data_p, 1, function(x) x[1]/sum(x[1],x[2])))
+my_var_m <- var(apply(my_data_m, 1, function(x) x[2]/sum(x[1],x[2])))
 
 #Variance of Pelagic misclassifications 
-my_var_pn <- var(apply(my_data_p, 1, function(x) x[2]/sum(x[1],x[2],x[3])))
-my_var_pm <- var(apply(my_data_p, 1, function(x) x[3]/sum(x[1],x[2],x[3])))
-
-#Variance of NWHI misclassifications
-my_var_np <- var(apply(my_data_n, 1, function(x) x[1]/sum(x[1],x[2],x[3])))
-my_var_nm <- var(apply(my_data_n, 1, function(x) x[3]/sum(x[1],x[2],x[3])))
+my_var_pm <- var(apply(my_data_p, 1, function(x) x[2]/sum(x[1],x[2])))
 
 #Variance of MHI misclassifications
-my_var_mp <- var(apply(my_data_m, 1, function(x) x[1]/sum(x[1],x[2],x[3])))
-my_var_mn <- var(apply(my_data_m, 1, function(x) x[2]/sum(x[1],x[2],x[3])))
+my_var_mp <- var(apply(my_data_m, 1, function(x) x[1]/sum(x[1],x[2])))
+
+```

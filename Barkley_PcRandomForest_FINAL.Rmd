@@ -36,7 +36,7 @@ library(tree)
 #Set up encounters for RF
 ```{r}
 #### Load data ####
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
 
 
 # Sample equal number of encounters per population 
