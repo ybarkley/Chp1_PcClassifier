@@ -25,8 +25,11 @@ library(data.table)
 library(ggplot2)
 
 pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
+<<<<<<< HEAD
 
 #To make the confusion matrix spit out encounters in order
+=======
+>>>>>>> bbdd5a62c6fe872c9118be70e33c2fd130189b86
 pcdata$group[pcdata$EncounterID == 'M2'] = 32
 pcdata$group[pcdata$EncounterID == 'M3'] = 33
 pcdata$group[pcdata$EncounterID == 'M4'] = 34
@@ -287,11 +290,19 @@ falsehope <- c(falsehope, false)
 Kappa Calculations
 ```{r}
 confmat <- read.csv('data/results/PcResults_Encounters_TotalResults_MHI_20190312.csv', header=T, row.names = 1)
+<<<<<<< HEAD
 
 #matrix dimensions
 # m = 4
 # n = 5
 
+=======
+
+#matrix dimensions
+# m = 4
+# n = 5
+
+>>>>>>> bbdd5a62c6fe872c9118be70e33c2fd130189b86
 confmat2 = as.matrix(confmat)
 total_obs = sum(confmat2[ , ])
 
