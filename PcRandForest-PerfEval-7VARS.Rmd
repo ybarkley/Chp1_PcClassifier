@@ -1,7 +1,7 @@
 ---
-title: "False Killer Whale Whistle Classification- RF with 7 signif diff variables"
+title: "False Killer Whale Whistle Classification- RF with 14 signif diff variables"
 author: "Yvonne Barkley"
-date: "September 24, 2018"
+date: "March 18, 2019"
 output:
   html_document: default
   pdf_document: default
@@ -13,7 +13,6 @@ This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute
 
 Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
 ```{r warning=FALSE, message=FALSE}
-library(sqldf)
 library(randomForest)
 library(partykit)
 library(caret)
@@ -81,54 +80,22 @@ pcdata<- pcdata[, c(61, 1:60)]
 write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv', row.names=F)
 ```
 
-Correlation Stuff
-```{r}
-##Calculate Pearson's correlation coefficient for all variables. Remove #variables -0.70 > r > 0.70.
-pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180809.csv')
-pcsub<-pcdata[,7:53]
-corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
-tmp <- cor(pcsub)
-tmp[upper.tri(tmp)] <- 0
-diag(tmp) <- 0
-pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
-# cormatrix <- rcorr(as.matrix(pcsubcor))  #creates correlation matrix with signif levels (p-values)
-# cormatrix[upper.tri(cormatrix)] <- 0
-
-
-#can print tmp as csv to look at pearson coefficients
-#write.csv(tmp, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results/Correlation_20180809.csv', row.names = F)
-
-
-  pcdata <- cbind(pcdata[, c(1:6)], pcsubcor)
-  corrplot.mixed(cor(pcdata[,7:31]), upper="circle", lower="number") # for a visual representation of the correlation
-  
-write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv', row.names = F)  
-  
-```
 
 
 #Set up encounters for RF
 ```{r}
-##Uncorrelated variables for all Random Forests
-#pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv')
-
-
-
-#Laptop directory
-#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
-
-#desktop directory
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
-
-#PIFSC desktop directory
-pcdata <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+#Load data
+pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
 
 #subset 7 variables that are significantly different between all populations via Dunn's test
-pcdata <- pcdata[, c(1:7,13,15,16,21,22,24)]
+#pcdata <- pcdata[, c(1:7,13,15,16,21,22,24)]
 
-#Remove MHI29, cluster 4
-#pcdata <-droplevels(filter(pcdata, EncounterID != 'PcMHI29'))
+#20190318
+#These are the common uncorrelated variables for each population used for the KS test
+pcdata.KS <- pcdata[, c(1:4,9,22:24,28:31,46,47,51:53)]
+
+
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -144,35 +111,6 @@ w = 150             # Number of whistles randomly pulled from each group
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 100        #Zack: number of times you want to resample from your dataset
 
-
- #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
-#formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
-
-
-# ##TESTING RF bc getting errors
-# accuracies <- c()
-# pred.table=NULL
- # fit <- randomForest(formPc, data=train, ntree=1000, importance=TRUE, replace=TRUE, mtry=5)
- # 
- # cfit <- cforest(formPc, data=train, ntree=1000, mtry = 5, control=ctree_control(mincriterion = 0, minsplit = 4L, minbucket = 2L))
- # #Equivalent of the confusion matrix provided by randomForest
- # OOBkit <- table(train$population, predict(cfit, OOB = TRUE, type = 'response'))
- # #Calculates the overall OOB
- # 1-(sum(diag(OOBkit))/nrow(train))
- # sink("cforest_ConfMat.txt")
- # OOBkit
- #  1-(sum(diag(OOBkit))/nrow(train))
- # sink()
- #prediction <-predict(fit, newdata=test, predict.all = F)
-#   
-#   test$rightPred <- prediction == test$population #shows individual whistle results
-#   t <- table(test$population, prediction)
-#   
-#   accuracy <- sum((test$rightPred)/nrow(test)) #sums all 'TRUE' and divides by total
-#   accuracies <- c(accuracies, accuracy)
-#   pred.table<-rbind(pred.table, rep, t, accuracy=signif(accuracy, digits = 3))
-
-
 ```
 
 
@@ -183,7 +121,7 @@ Meat of the Analysis
 ptm<-proc.time()
 
 
-results = matrix(0, nrow = 3, ncol = 3)
+results.KS = matrix(0, nrow = 3, ncol = 3)
 #output_ModelFit = matrix(0, nrow=3, ncol = 4)
 output_ModelFit = NULL
 realP = c()
@@ -233,7 +171,7 @@ for(rep in 1:n_samps){
   #Zack: I just combined the mhi, pelagic, and nwhi bit into one loop
   all = NULL
   for(i in c(N_pel,N_nwhi,N_mhi)){
-    sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+    sub=droplevels(subset(pcdata.KS, pcdata.KS$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
     samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
     all <-rbind(all, samp)
     
@@ -253,23 +191,15 @@ for(rep in 1:n_samps){
   
   test<-droplevels(subset(all, group%in%N_test))
   train<-droplevels(subset(all, !(group%in%N_test)))
-  #print(unique(train$EncounterID))
-  #print(unique(test$EncounterID))
-  
-  # testp <- subset(test, test$population == 'pelagic')
-  # testn <- subset(test, test$population == 'nwhi')
 
-# ADDING } to test making the training and test data
-#}
-  
   
  
 
 
 #### Tuning parameters ####
 ## Set up a dataframe where each row is a specific combination of mtry (# of variables selected at each split), n_tree (# of trees in  forest), possibly other stuff
-mtry_vals = 5:8
-ntree_vals = seq(500,5000,500) #from, to, by
+mtry_vals = sqrt(length(all[,7:length(all)]))
+ntree_vals = seq(501,5001,500) #from, to, by
 tune_settings = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 #tune_settings2 = expand.grid(mtry = mtry_vals, ntree = ntree_vals)
 
@@ -325,11 +255,11 @@ tunedAll <- rbind(tunedAll, tuned)
 
 #### Run Random Forest ####
 ##Run Random Forest model using 'tuned' parameters for mtry and ntree
-  fit <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=F, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
+  fit.KS <- randomForest(formPc, data=train, ntree=tuned[1,2], importance=TRUE, replace=F, mtry=tuned[1,1], norm.votes=F, confusion=T, keep.inbag=T, proximity=T, keep.forest=T, scale = F) 
 
 #prediction for population of test data using RF model, 'fit', returns a list with aggregate and individual votes for each whistle  
-  prediction <-predict(fit, newdata=test, predict.all = F, type='response') 
-  prediction.vote <-predict(fit, newdata=test, predict.all = T, type='vote')
+  prediction <-predict(fit.KS, newdata=test, predict.all = F, type='response') 
+  prediction.vote <-predict(fit.KS, newdata=test, predict.all = T, type='vote')
   
    test$rightPred <- as.character(prediction) == as.character(test$population) #shows T/F for individual whistles and whether they were classified correctly
   accuracy <- sum((test$rightPred)/nrow(test)) #sums all 'TRUE' and divides by total
@@ -343,7 +273,7 @@ tunedAll <- rbind(tunedAll, tuned)
   results.temp <- table(test$population, prediction)  # conf matrix of individual whistle counts
   
   #Summed results confusion matrix after each iteration
-results = results + results.temp 
+results.KS = results.KS + results.temp 
     
 #For calculating means and standard dev for EACH ITERATION of confusion matrix
 #For a single iteration, stores separate cells of class results for calculating mean and standard error
@@ -403,13 +333,13 @@ colnames(e) = c("EncounterClass", "PctCorrect") #, "EncounterID")
 
 #1.
 #Save each RF model's confusion matrix and OOB error
-output_ModelFit <- rbind(output_ModelFit, as.table(fit$confusion), mean(fit$err.rate))
+output_ModelFit <- rbind(output_ModelFit, as.table(fit.KS$confusion), mean(fit.KS$err.rate))
 
 #2.
 #Save results for each individual whistle, including overall predictions based on majority vote of forest and individual tree predictions
-g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
-
-output_WhistleClass <- bind_rows(list(output_WhistleClass, g), .id ="id")
+# g=cbind(rep, "EncounterID"= test$EncounterID, "EncounterCount"=test$EncounterCount, "Prediction"=test$rightPred, "PredictedPop"=prediction, as.data.frame(cbind(prediction.vote$aggregate, prediction.vote$individual))) 
+# 
+# output_WhistleClass <- bind_rows(list(output_WhistleClass, g), .id ="id")
 
 #3.
 #table keeping track of individual confusion matrices for all iterations
@@ -427,7 +357,7 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 
 #6.
   # Important Variables
-  varIMPtemp <- as.data.frame(importance(fit))
+  varIMPtemp <- as.data.frame(importance(fit.KS))
   varIMP <- varIMPtemp[order(varIMPtemp$MeanDecreaseAccuracy), , drop =F]
   output_varIMPtotal <- rbind(output_varIMPtotal, "REP"=rep, varIMP)
 
@@ -438,11 +368,11 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 
 }
 
-correctP <- round((results[1,1]/(results[1,1]+results[1,2]+results[1,3])*100), 2)
-correctN <- round((results[2,2]/(results[2,1]+results[2,2]+results[2,3])*100), 2)
-correctM <- round((results[3,3]/(results[3,1]+results[3,2]+results[3,3])*100), 2)
+correctP <- round((results.KS[1,1]/(results.KS[1,1]+results.KS[1,2]+results.KS[1,3])*100), 2)
+correctN <- round((results.KS[2,2]/(results.KS[2,1]+results.KS[2,2]+results.KS[2,3])*100), 2)
+correctM <- round((results.KS[3,3]/(results.KS[3,1]+results.KS[3,2]+results.KS[3,3])*100), 2)
 
-output_CorrectClass <- rbind(results,cbind(correctP, correctN, correctM))
+output_CorrectClass <- rbind(results.KS,cbind(correctP, correctN, correctM))
 
 
  proc.time() - ptm
@@ -461,9 +391,9 @@ seRealN <- se(realN)
 seRealM <- se(realM)
 
  
-date='20180824'
+date='20190318'
 #Combine means and std errors into matrix
-sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20180824.txt", append=T)
+sink("data\\results\\ConfMatrixPMN_KS_means_20190318.txt", append=T)
 PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
 PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
 PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
@@ -474,22 +404,6 @@ n_samps
 PNMtotal
 sink()
 
-
-
-#For saving to laptop 
-# date='20180818'
-# #Combine means and std errors into matrix
-# sink("C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\results\\20180818\\ConfMatrix_means_20180809.txt", append=T)
-# PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
-# PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
-# PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
-# 
-# date
-# w
-# n_samps
-# PNMtotal
-# sink()
-#  
 ``` 
  
  

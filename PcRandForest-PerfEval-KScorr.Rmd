@@ -81,13 +81,10 @@ pcdata<- pcdata[, c(61, 1:60)]
 write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv', row.names=F)
 ```
 
-IGNORE THIS STEP SINCE THE CORRELATION STUFF IS INCLUDED IN EACH ITERATION OF THE RFS
 Correlation Stuff
 ```{r}
 ##Calculate Pearson's correlation coefficient for all variables. Remove #variables -0.70 > r > 0.70.
-#pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180809.csv')
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
-
+pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180809.csv')
 pcsub<-pcdata[,7:53]
 corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
@@ -106,7 +103,7 @@ pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
   pcdata <- cbind(pcdata[, c(1:6)], pcsubcor)
   corrplot.mixed(cor(pcdata[,7:31]), upper="circle", lower="number") # for a visual representation of the correlation
   
-write.csv(pcdata, 'C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\pcdataUNCORRELATED_20181204.csv', row.names = F)  
+write.csv(pcdata, 'C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv', row.names = F)  
   
 ```
 
@@ -116,17 +113,16 @@ write.csv(pcdata, 'C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\p
 ##Uncorrelated variables for all Random Forests
 #pcdata<-read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\pcdata_20180809.csv')
 
+
+
 #Laptop directory
 #pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
 
 #desktop directory
-#pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_2018914.csv')
+pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP1\\BigRoccaFile_PMN_TowedAll_EDIT_2018914.csv')
 
 #Remove MHI29, cluster 4
 #pcdata <-droplevels(filter(pcdata, EncounterID != 'PcMHI29'))
-
-pcdata <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
-
 
 # Need even number of encounters for each population represented in the training data. 
 PEL = 1:8                # designated groupID's assigned for each pelagic group 
@@ -138,9 +134,9 @@ nrep  = 4           # multiplier for total number of groups
 npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
-w = 100             # Number of whistles randomly pulled from each group 
+w = 150             # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 100        #Zack: number of times you want to resample from your dataset
+n_samps = 2        #Zack: number of times you want to resample from your dataset
 
 #formPc <- as.formula(paste("population ~ ", paste(names(pcdata)[7:54],collapse="+"))) #Use variables to classify to population
 #formPc_enc <- as.formula(paste("id ~ ", paste(names(pcdata)[8:31],collapse="+"))) #Use variables to classify to encounter
@@ -204,6 +200,8 @@ tunedAll=NULL
 output_varIMPtotal = NULL
 accuracies = c()
 
+signif_vars = NULL
+
 se <- function(x) sd(x)/sqrt(length(x))
 # names.test=NULL
 # names.train=NULL
@@ -229,35 +227,77 @@ for(rep in 1:n_samps){
   
   #Zack: I just combined the mhi, pelagic, and nwhi bit into one loop
   all = NULL
+
   for(i in c(N_pel,N_nwhi,N_mhi)){
     sub=droplevels(subset(pcdata, pcdata$group==i)) #selects all whistles from the randomly selected groups, drops empty levels too
+    
     samp=sub[sample(nrow(sub), w),] #randomly samples w whistles from the 50 or more whistles
     all <-rbind(all, samp)
+  }
     
-    }
-  
+    sampP <- subset(all, all$population=='Pelagic') 
+    sampN <- subset(all, all$population=='NWHI')
+    sampM <- subset(all, all$population=='MHI')
+    
+    ks_vars_p <- sampP[ ,c(7:53)]  
+    ks_vars_n <- sampN[ ,c(7:53)]
+    ks_vars_m <- sampM[ ,c(7:53)]  
+ 
+#### Kolmogorov-Smirnov Tests ####
+ks_resultsMN = NULL
+ks_resultsMP = NULL
+ks_resultsPN = NULL
+
+for (m in colnames(ks_vars_m))
+     {
+ 
+       ksMN <- ks.test(ks_vars_m[,m], ks_vars_n[,m])
+       ksMP <- ks.test(ks_vars_m[,m], ks_vars_p[,m])
+     
+       ksMN_df <- cbind(colnames(ks_vars_m[m]),ksMN$statistic,ksMN$p.value)
+       ksMP_df <- cbind(colnames(ks_vars_m[m]), ksMP$statistic, ksMP$p.value)
+
+      ks_resultsMN <- rbind(ks_resultsMN, ksMN_df)
+      ks_resultsMP <- rbind(ks_resultsMP, ksMP_df)
+      
+}
+for (m in colnames(ks_vars_m))
+     {
+       ksPN <- ks.test(ks_vars_p[,m], ks_vars_n[,m])
+
+       ksPN_df <- cbind(colnames(ks_vars_p[m]),ksPN$statistic,ksPN$p.value)
+      
+      ks_resultsPN <- rbind(ks_resultsPN, ksPN_df)
+
+}  
+
+  ks_resultsMN <- cbind(ks_resultsMN, "MHIvsNWHI")
+  ks_resultsMP <- cbind(ks_resultsMP, "MHIvsPelagic")
+  ks_resultsPN <- cbind(ks_resultsPN, "PelagicvsNWHI")
+
+ks_resultsALL <- as.data.frame(rbind(ks_resultsMN, ks_resultsMP, ks_resultsPN))
+colnames(ks_resultsALL) <- c("variable", "statistic", "p.value", "comparison")
+ks_resultsALL_signif <- droplevels(filter(ks_resultsALL, as.numeric(as.character(ks_resultsALL$p.value)) <= 0.05) )
+
+variables <- unique(ks_resultsALL_signif$variable[duplicated(ks_resultsALL_signif$variable)]) #pull out names of signif different variables (may not be signif for all comparisons)
+idx_test <- sort(match(variables, names(pcdata)))  
+ks_All_new <- cbind(pcdata[,c(1:6)], pcdata[, idx_test])
+
 #Correlation Step####
-pcsub<-all[,7:53]
+pcsub<-ks_All_new[,7:length(ks_All_new)]
 #corrplot.mixed(cor(pcsub, method= "pearson"), upper="number", lower="circle")
 tmp <- cor(pcsub)
 tmp[upper.tri(tmp)] <- 0
 diag(tmp) <- 0
 pcsubcor <- pcsub[,!apply(tmp,2,function(x) any(x > 0.80 | x < -0.80))]
 
-all <- cbind(all[, c(1:6)], pcsubcor)
+all <- cbind(ks_All_new[, c(1:6)], pcsubcor)
 
   
   
   test<-droplevels(subset(all, group%in%N_test))
   train<-droplevels(subset(all, !(group%in%N_test)))
-  #print(unique(train$EncounterID))
-  #print(unique(test$EncounterID))
-  
-  # testp <- subset(test, test$population == 'pelagic')
-  # testn <- subset(test, test$population == 'nwhi')
 
-# ADDING } to test making the training and test data
-#}
   
   
  
@@ -428,10 +468,9 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
   varIMP <- varIMPtemp[order(varIMPtemp$MeanDecreaseAccuracy), , drop =F]
   output_varIMPtotal <- rbind(output_varIMPtotal, "REP"=rep, varIMP)
 
-
-#df to show the prediction of each individual whistle per encounter (THIS IS DOCUMENTED IN 'g')
-# output_IndDW<-data.frame(rep, "EncounterID"=test$EncounterID, "PredictedPop"=prediction, "EncounterCount"=test$EncounterCount) 
-# output_IndDWAll <- rbind(output_IndDWAll, output_IndDW)  #consolidates all individual whistle results for each iteration
+#7. Significantly Different Variables
+output_varsSet <- data.frame(rep, "variables" = variables)
+  signif_vars <- rbind(signif_vars, output_varsSet)
 
 }
 
@@ -458,9 +497,9 @@ seRealN <- se(realN)
 seRealM <- se(realM)
 
  
-date='20181204'
+date='20180824'
 #Combine means and std errors into matrix
-sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20181204.txt", append=T)
+sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPMN_means_20180824.txt", append=T)
 PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
 PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
 PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
@@ -470,6 +509,7 @@ w
 n_samps
 PNMtotal
 sink()
+
 
 
 #For saving to laptop 
@@ -493,21 +533,21 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_ConfusionMatrix_PMN_20181205.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalResults_PMN_20181205.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalWhistleClass_PMN_20181205.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PMN_20180824.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TrainSets_PMN_20181205.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PMN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TestResults_PMN_20181205.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PMN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_ImportantVars_PMN_20181205.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PMN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TunedParameters_PMN_20181205.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PMN_20180824.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181205_PMN_100x_withoutreplace/PcResults_TotalModels_PMN_20181205.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PMN_20180824.csv", append = T, col.names=F, sep = ",")
 
 ```
  

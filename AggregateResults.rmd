@@ -8,42 +8,38 @@ output: html_notebook
 Use aggregate function to complete various analyses of the test results.
 
 ```{r}
+# This code aggregates the classification results of the test data from the different iterations of Random Forests to  
+
 library(plyr)
 library(reshape2)
-library(dplyr)
+
+
+today = 20190318
+model = 'PMN'
+thld = 60  # Equates to a threshold of the number of whistles that must be correctly classified to classify the encounter to the correct population. 
+# For example, 50 is 33% of 150 whistles, then 75 is 50% for pairwise classifiers.
+
 #Import PcResults_TestResults csv for the classifier
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PMN_100x/PcResults_TestResults_PMN_20180824.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PMN_20181209.csv')
 
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180824_PN_100x/PcResults_TestResults_PN_20180824.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PN_20181209.csv')
 
-agg_data <- read.csv('C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20180822_PM_100x/PcResults_TestResults_PM_20180822.csv')
+agg_data <- read.csv('data/PcResults_TestResults_PM_20181209.csv')
+
 
 #1. How many times was each acoustic encounter represented in the test data?
 AcEncs_Test <- aggregate(x = agg_data, 
                                by = list(unique.values = agg_data$EncounterID), 
                                FUN = length)
-#Same result as using 'aggregate'
-#count(agg_data$EncounterID) #func 'count' from plyr package conflicts with dplyr
-
-#2. How many times were the populations classified correctly using a threshold of >=50%?
-#count(agg_data$EncounterClass)
-# 1 Ambiguous  222
-# 2       MHI   58
-# 3      NWHI    8
-# 4   Pelagic   12
-
-#Get frequencies for every value and every variable in df
-#lapply(agg_data, count)
 
 
-### THIS WORKS!! ####
-#Loop the subsetting to sum up things 
+#2. Loop the subsetting to sum up things 
 IDs <- unique(agg_data$EncounterID)
 filtByEnc = NULL
 filtCorrect = NULL
 for (k in 1:length(IDs)){
   temp <- agg_data[agg_data$EncounterID==IDs[k], ]
-  correct <- data.frame("EncounterID" = IDs[k], "x"=sum(temp$PctCorrect >= 60)) #change to 50 for PNM model, and Pct.Correct
+  correct <- data.frame("EncounterID" = IDs[k], "agg_x"=sum(temp$CorrectDW > thld)) # sum up the number of times the correct whistle classifications exceeded the threshold for each encounter
   filtCorrect = rbind(filtCorrect, correct)
   filtByEnc = rbind(filtByEnc, temp)
 }
@@ -53,29 +49,18 @@ filtCorrect <- filtCorrect[order(as.character(filtCorrect$EncounterID)),]
 
 #What is the number of correctly classified encounters based on the number of times the acoustic encounter was included in the test data?
 #Combine filtered correct data with tally of times ac enc was included in the test data
-agg_data_sum <- cbind(filtCorrect, "y" = AcEncs_Test$rep)
+agg_data_sum <- cbind(filtCorrect, "agg_y" = AcEncs_Test$rep)
 
 #Divide columns to get proportional data and add that into a third column
 #library(dplyr)
-agg_data_sum <- mutate(agg_data_sum, new = x/y)
+agg_data_sum <- mutate(agg_data_sum, new = agg_x/agg_y)
 
-
-write.csv(agg_data_sum,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_AggregatedTestResults_PM_20180830.csv', row.names = F )
+fn = sprintf("%s_%s_%s.csv", thld, model, today)
+write.csv(agg_data_sum, file= paste('PcResults_AggregatedTestResults_MajorityVote_thld', fn, sep=""), row.names = F )
 write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
-#If needed
-#Get frequencies for every value and every variable in df
-lapply(agg_data, count)
-
-
-
 
 
 ```
 
 
 
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
-
-The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.

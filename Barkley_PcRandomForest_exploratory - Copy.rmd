@@ -3,44 +3,6 @@ This code plots the distribution of the ROCCA variables for each population to e
 
 ```{r message=FALSE}
 library(dplyr)
-pcplot <- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180816.csv')
-
-pcplot <- read.csv('C:\\Users\\yvers\\Documents\\CHP 1\\data\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
-
-
-
-pcplot$population = as.character(pcplot$population)
-pcplot$population[pcplot$population == 'mhi'] = "MHI"
-pcplot$population[pcplot$population == 'pel'] = "Pelagic"
-pcplot$population[pcplot$population == 'nwhi'] = "NWHI"
-pcplot$population = as.factor(pcplot$population)
-
-pcplot$EncounterID = as.character(pcplot$EncounterID)
-pcplot$EncounterID[pcplot$EncounterID == 'PcMHI31'] = "M2"
-pcplot$EncounterID[pcplot$EncounterID == 'PcMHI32'] = "M3"
-pcplot$EncounterID[pcplot$EncounterID == 'PcMHI33'] = "M4"
-pcplot$EncounterID[pcplot$EncounterID == 'PcMHI34'] = "M1"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL1'] = "P6"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL2'] = "P1"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL3'] = "P2"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL4'] = "P4"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL5'] = "P5"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL6'] = "P3"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL7'] = "P8"
-pcplot$EncounterID[pcplot$EncounterID == 'PcPEL8'] = "P7"
-pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI14'] = "N2"
-pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI15'] = "N3"
-pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI16'] = "N4"
-pcplot$EncounterID[pcplot$EncounterID == 'PcNWHI17'] = "N1"
-pcplot$EncounterID = as.factor(pcplot$EncounterID)
-
-pcplot <- pcplot[, -c(54:61)]
-
-write.csv(pcplot, 'C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv' )
-
-#PIFSC desktop
-pcplot<- read.csv('C:\\Users\\yvonne.barkley\\Documents\\PHD\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
-
 
 pcplot<- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles/ROCCA Towed Data/BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
 pcdata.P <- droplevels(filter(pcplot, population == "Pelagic"))      
@@ -49,14 +11,13 @@ pcdata.M <- droplevels(filter(pcplot, population == "MHI"))
 
 #remove columns
 pcplotsub <- pcplot[, -c(2:6, 54:61)]
-pcplotsub <- pcplot[, -c(2,4:6)]
 pcdata.Msub <- pcdata.M[, -c(2,4:6, 54:61)]
 names<-names(pcdata.Msub)
 names<-names(pcplotsub)
 names<-names[-c(1)]
 ```
 
-##Multipanel Density plots of variables within and between populations
+##Density plots of variables across populations
 ```{r}
 ### 9/12/2018 ####
 library(ggplot2)
@@ -79,8 +40,6 @@ names<-names[-1]
 
 ##Functioning code for Density Plots in multipanels on multiple pages ####
   #ggplot2 density plots
-
-###BY POPULATION
 plots <- list()
 for(nm in names){
 plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  geom_density(alpha = 0.3) +
@@ -89,12 +48,11 @@ plots[[nm]]<- ggplot(pcplotsub, aes_string(x=nm, fill=pcplotsub$population)) +  
         axis.title.x=element_text(size=10, face='bold'),
         axis.text.x=element_text(size=8),
         axis.text.y=element_text(size=8)) +
-        guides(fill=guide_legend(title="Population")) +
-  scale_fill_brewer()
+        guides(fill=guide_legend(title="Population"))
 #ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
 }
 #arrange plots 
-multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "top" )
+multipage <- ggarrange(plotlist=plots, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
 #export plots to multiple pages
 ggexport(multipage, filename = "multi.page.ggplot2.pdf")
 #another option to plot on multiple pages, but not as good
@@ -113,20 +71,18 @@ levels(pcdata.Msub$EncounterID) <- c("M1", "M2", "M3", "M4" )
 plots.P <- list()
 plots.N <- list()
 plots.M <- list()
-
 for(nm in names){
-plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.5) +
+plots.P[[nm]]<- ggplot(pcdata.P, aes_string(x=nm, fill=pcdata.P$EncounterID)) +  geom_density(alpha = 0.3) +
     theme_bw()+
     theme(plot.background = element_rect(fill = "white"),
         axis.title.x=element_text(size=10, face='bold'),
         axis.text.x=element_text(size=8),
         axis.text.y=element_text(size=8)) +
-        guides(fill=guide_legend(title="Population")) +
-  scale_fill_brewer(palette = "Paired")
+        guides(fill=guide_legend(title="Population"))
 #ggsave(filename = paste("PcDensityPlot", nm, '.png', sep = ""), width = 12, height = 8, units = "in", type = "cairo-png")
 }
 #arrange plots 
-multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "top" )
+multipage <- ggarrange(plotlist=plots.P, ncol = 2, nrow = 4, common.legend = TRUE, legend = "bottom" )
 #export plots to multiple pages
 ggexport(multipage, filename = "PcDensityPlot_PelagicVariables.pdf")
 
@@ -209,11 +165,11 @@ color <- c('#35bb7c', 'black', '#947d51','#8576aa')
 
 
 #Plot Mean positive slope / duration
-freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQSPREAD, col=as.factor(population))) +
+freqslope=ggplot(pcplot, aes(x = EncounterID, y = FREQPOSSLOPEMEAN, col=as.factor(population))) +
   geom_boxplot() +
   theme_bw() +
   labs(x="Encounter", y="Frequency (Hz)", 
-       title="Frequency Spread") +
+       title="Mean Positive Slope") +
   theme(panel.background = element_rect(fill = "white"),
         plot.background = element_rect(fill = "white"),
         plot.title = element_text(size=20, hjust=0.5, face='bold'),

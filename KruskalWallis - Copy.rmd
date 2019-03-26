@@ -1,0 +1,183 @@
+
+#Kruskal-Wallis Tests
+```{r}
+pcdata <- read.csv('C:\\Users\\Yvonne\\Documents\\PHD\\CHP1-FKW\\data/2017- 100 New Whistles\\ROCCA Towed Data\\BigRoccaFile_PMN_TowedAll_EDIT_20180914.csv')
+
+pcdata.MN <- filter(pcdata, population == "mhi" | population == "nwhi")
+pcdata.PM <- droplevels(filter(pcdata, population == "mhi" | population == "pel"))
+pcdata.PN <- droplevels(filter(pcdata, population == "pel" | population == "nwhi"))
+
+
+pcdata.P <- droplevels(filter(pcdata, population == "Pelagic"))      
+pcdata.N <- droplevels(filter(pcdata, population == "NWHI"))      
+pcdata.M <- droplevels(filter(pcdata, population == "MHI"))
+
+```
+
+##KW test WITHIN populations 
+###May-Collado and Wartzok 2008
+```{r}
+#https://stackoverflow.com/questions/21271449/how-to-apply-the-wilcox-test-to-a-whole-dataframe-in-r
+
+##FOR PELAGIC ENCOUNTERS
+#Put column names of variables in a vector
+names <- names(pcdata.P)[-c(1:6, 54:61)]
+
+#This makes a list of all K-W test results for all variables
+kwP <- apply(pcdata.P[-c(1:6,54:61)],2, function(x) kruskal.test(x,pcdata.P$EncounterID))#, p.value = 0.0009))
+
+#I only want p-values < 0.05
+kwP_pval <- do.call(rbind, lapply(KW_P, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
+
+kwP_pvaldf <-cbind(names, as.data.frame(kwP_pval, row.names = T)) #create dataframe of pvalues from matrix
+colnames(kwP_pvaldf)<-c("variable", "p.value")  #success!
+kwP_signif <- filter(kwP_pvaldf, kwP_pvaldf$p.value <= 0.05) #filter out only variables with pvalues <= 0.05
+namesP <- colnames(kwP_signif)
+
+
+#FOR NWHI ENCOUNTERS
+kwN <- apply(pcdata.N[-c(1:6,54:61)],2, kruskal.test,pcdata.N$EncounterID)
+kwN_pval <- do.call(rbind, lapply(kwN, function(v){v$p.value})) #pull out only pvalues from list (makes matrix)
+kwN_x2 <- do.call(rbind, lapply(kwN, function(v){v$statistic})) #pull out only chi square values from list (makes matrix)
+kwN_df <- do.call(rbind, lapply(kwN, function(v){v$parameter})) #pull out only degrees of freedom values from list (makes matrix)
+kwN_pvaldf <- as.data.frame(cbind(names, kwN_x2, kwN_df, kwN_pval), row.names = F) #create dataframe of pvalues from matrix
+colnames(kwN_pvaldf)<-c("variable", "chi-squared", "df", "p.value")  #success!
+
+kwN_signif <- filter(kwN_pvaldf, kwN_pvaldf$p.value <= 0.05)  ##!!!why is this now a facort?
+namesN <- colnames(kwN_signif)
+
+#FOR MHI ENCOUNTERS 
+kwM <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
+kwM_pval <- do.call(rbind, lapply(kwM, function(v){v$p.value})) #pull out only values from list (makes matrix)
+kwM_pvaldf <-cbind(names, as.data.frame(kwM_pval, row.names = T)) #create dataframe of pvalues from matrix
+colnames(kwM_pvaldf)<-c("variable", "p.value")  #success!
+
+kwM_signif <- filter(kwM_pvaldf, kwM_pvaldf$p.value <= 0.05)
+namesM <- colnames(kwM_signif)
+
+
+```
+##Subset data for only significant variables
+```{r}
+#Create dataframes with only variables that match the significant variables from the KW tests
+
+#vector of variable names
+PNMvars <- b2signif[,1]
+idx <- match(PNMvars, names(pcdata))  
+newPNMdf <- cbind(pcdata[,c(1:6)], pcdata[, idx])
+
+#For Pelagic and NWHI
+PNvars <- b2signif[,1]
+idx <- match(PNvars, names(pcdata.PN))  
+newPNdf <- cbind(pcdata.PN[,c(1:6)], pcdata.PN[, idx])
+
+#for Pelagic and MHI
+PMvars <- b2signif[,1]
+idx <- match(PMvars, names(pcdata.PM))  
+newPMdf <- cbind(pcdata.PM[,c(1:6)], pcdata.PM[, idx])
+
+
+write.csv(newPNMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PNM.csv', row.names = F)
+write.csv(newPNdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PN.csv', row.names = F)
+write.csv(newPMdf, 'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\2017- 100 New Whistles\\ROCCA Towed Data\\SIGNIF_PM.csv', row.names = F)
+
+```
+
+
+##Kruskal Wallis tests for important variables - MHI population
+```{r}
+#MHI
+pckw.M <- apply(pcdata.M[-c(1:6,54:61)],2, kruskal.test,pcdata.M$EncounterID)
+
+b.M <- do.call(rbind, lapply(pckw.M, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.M <-cbind(names, as.data.frame(b.M, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.M)<-c("variable", "p.value")  #success!
+
+b2signif.M <- filter(b2.M, b2.M$p.value <= 0.05)
+namesM <- colnames(b2signif.M)
+
+
+#Pelagic
+pckw.P <- apply(pcdata.P[-c(1:6,54:61)],2, kruskal.test,pcdata.P$EncounterID)
+
+b.P <- do.call(rbind, lapply(pckw.P, function(v){v$p.value})) #pull out only values from list (makes matrix)
+b2.P <-cbind(names, as.data.frame(b.P, row.names = T)) #create dataframe of pvalues from matrix
+colnames(b2.P)<-c("variable", "p.value")  #success!
+
+b2signif.P <- filter(b2.P, b2.P$p.value <= 0.05)
+namesP <- colnames(b2signif.P)
+
+
+#NWHI
+pckw.N <- apply(pcdata.N[-c(1:6,54:61)],2, kruskal.test,pcdata.N$EncounterID)
+
+b.N <- do.call(rbind, lapply(pckw.N, function(v){v$p.value})) #pull out only p-values from list (makes matrix)
+b2.N <-cbind(names, as.data.frame(b.N, row.names = T)) #create dataframe of all pvalues from matrix
+colnames(b2.N)<-c("variable", "p.value")  #success!
+
+b2signif.N <- filter(b2.N, b2.N$p.value <= 0.05)
+namesN <- colnames(b2signif.N)
+
+
+
+```
+
+```{r}
+#### FREQQUARTER3 ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(FREQQUARTER3~population, pcdata)
+
+#MHI-NWHI
+kruskal.test(FREQQUARTER3~population, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(FREQQUARTER3~population, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(FREQQUARTER3~population, pcdata.PN)
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+
+```
+
+```{r}
+#### DURATION ####
+
+#MHI-NWHI-Pelagic
+kruskal.test(population ~ DURATION, pcdata)
+
+#MHI-NWHI
+kruskal.test(population ~ DURATION, pcdata.MN)
+
+#MHI-Pelagic
+kruskal.test(population ~ DURATION, pcdata.MP)
+
+#Pelagic-NWHI
+kruskal.test(population ~ DURATION, pcdata.PN)
+```
+
+##Pairwise Wilcox Test with Holm method pvalue adjustment
+```{r}
+out <- lapply(7:53, function(x) pairwise.wilcox.test(pcdata[[x]], pcdata$population))
+names(out) <- names(pcdata)[7:53]
+out
+
+#matrix of only pvalues
+sapply(out, function(x) {
+    p <- x$p.value
+    n <- outer(rownames(p), colnames(p), paste, sep='v')
+    p <- as.vector(p)
+    names(p) <- n
+    p
+})
+
+```
+
