@@ -471,8 +471,8 @@ output_TestSetAll.pn <-rbind(output_TestSetAll.pn, output_TestSet.pn)
   # Important Variables
   varIMPtemp.pn <- as.data.frame(fit.pn$importance)
   varIMP.pn <- varIMPtemp.pn[order(varIMPtemp.pn$MeanDecreaseGini), , drop =F]
-  output_varIMPtotal.pn <- rbind(output_varIMPtotal.pn, "REP"=rep, varIMP.pn)
-
+  output_varIMPtotal.pn <- cbind(rep, rbind(output_varIMPtotal.pn, varIMP.pn))
+  
 
 
 if( (rep %% 10) == 0){ # take rep, divide by 10, outputs remainder

@@ -257,7 +257,7 @@ results.enc <- results.enc + enc_results.temp
 # Important Variables
   varIMPtemp.enc <- as.data.frame(enc_fit$importance)
   varIMP.enc <- varIMPtemp.enc[order(varIMPtemp.enc$MeanDecreaseAccuracy), , drop =F]
-  varIMPtotal.enc <- rbind(varIMPtotal.enc, "REP"=rep, varIMP.enc)
+  varIMPtotal.enc <- cbind(rep, rbind(varIMPtotal.enc, varIMP.enc))
 
 
 if( (rep %% 10) == 0){ # take rep, divide by 10, outputs remainder
