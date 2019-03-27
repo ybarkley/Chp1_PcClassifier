@@ -37,13 +37,6 @@ agg_data<-agg_data[order(agg_data$EncounterID),]
 # YB 3/22/19
 ####with new majority vote classificaiton ####
 
-#1. How many times was each acoustic encounter represented in the test data?
-#1. How many times was each acoustic encounter represented in the test data?
-AcEncs_Test <- aggregate(x = agg_data, 
-                               by = list(unique.values = agg_data$EncounterID),                                FUN = length)
-
-
-
 #Get number of times each encounter was included in the test data
 
 IDs <- unique(agg_data$EncounterID)
@@ -51,21 +44,22 @@ pc_sum = NULL
 pc_encID = NULL
 
 for (k in 1:length(IDs)){
-  temp <- agg_data[agg_data$EncounterID==IDs[k], ]
-  # does the classification match the population?
-  pc_pred <-ifelse(temp$population == temp$classification, unique(temp$population), ifelse(temp$population != temp$classification, 0, NA))
+  temp <- agg_data[agg_data$EncounterID==IDs[k], ] #subset by encounter
+  # does the classification match the population? If yes, give it the population name (level number). If no, give it a zero.
+  pc_pred <-ifelse(temp$population == temp$classification, unique(temp$population),  ifelse(temp$population != temp$classification, 0, NA))
   
-  pc_sum[k] <- sum(pc_pred != 0)
-  pc_encID = rbind(pc_encID, unique(levels(temp$EncounterID))[k])
+  pc_sum[k] <- sum(pc_pred != 0) #sum total the does not equal zero.
+  pc_encID = rbind(pc_encID, unique(levels(temp$EncounterID))[k]) #pull out each EncID into a new column for each iteration. 
   }
-pc_total = cbind.data.frame(pc_encID, pc_sum)
+pc_total = cbind.data.frame(pc_encID, pc_sum)  #total  number of correct class by majority per encounter
 
-agg_temp <- aggregate(population~EncounterID, agg_data, length )
+agg_temp <- aggregate(population~EncounterID, agg_data, length) #get total frequency of encounters included in all iterations
 
+#Combine everything and calculate percentage true
 agg_total <- cbind.data.frame('EncounterID'=agg_temp[,1], 
                               'observed'=agg_temp[,2], 
                               'predicted'=pc_total[,2], 
-                              'proportion true'=pc_total$pc_sum/agg_temp$population)
+                              'percentage true'=pc_total$pc_sum/agg_temp$population*100)
 
 fn1 = sprintf("%s", model)
 fn2 = sprintf("%s.csv", today)
