@@ -14,26 +14,81 @@ library(plyr)
 library(reshape2)
 
 
-today = 20190318
-model = 'PMN'
-thld = 60  # Equates to a threshold of the number of whistles that must be correctly classified to classify the encounter to the correct population. 
+today = 20190325
+model = 'PN'
+thld = 50  # Equates to a threshold of the number of whistles that must be correctly classified to classify the encounter to the correct population. 
 # For example, 50 is 33% of 150 whistles, then 75 is 50% for pairwise classifiers.
+
+####Load Data####
+# Load acoustic encounter csv
+agg_data <- read.csv('data/results/PcResults_PMN_EncounterClass_20190322.csv')
+
+agg_data <- read.csv('data/results/PcResults_PM_EncounterClass_20190325.csv')
+
+agg_data <- read.csv('data/results/PcResults_PN_EncounterClass_20190325.csv')
+```
+
+
+
+
+```{r}
+
+agg_data<-agg_data[order(agg_data$EncounterID),]
+# YB 3/22/19
+####with new majority vote classificaiton ####
+
+#1. How many times was each acoustic encounter represented in the test data?
+#1. How many times was each acoustic encounter represented in the test data?
+AcEncs_Test <- aggregate(x = agg_data, 
+                               by = list(unique.values = agg_data$EncounterID),                                FUN = length)
+
+
+
+#Get number of times each encounter was included in the test data
+
+IDs <- unique(agg_data$EncounterID)
+pc_sum = NULL
+pc_encID = NULL
+
+for (k in 1:length(IDs)){
+  temp <- agg_data[agg_data$EncounterID==IDs[k], ]
+  # does the classification match the population?
+  pc_pred <-ifelse(temp$population == temp$classification, unique(temp$population), ifelse(temp$population != temp$classification, 0, NA))
+  
+  pc_sum[k] <- sum(pc_pred != 0)
+  pc_encID = rbind(pc_encID, unique(levels(temp$EncounterID))[k])
+  }
+pc_total = cbind.data.frame(pc_encID, pc_sum)
+
+agg_temp <- aggregate(population~EncounterID, agg_data, length )
+
+agg_total <- cbind.data.frame('EncounterID'=agg_temp[,1], 
+                              'observed'=agg_temp[,2], 
+                              'predicted'=pc_total[,2], 
+                              'proportion true'=pc_total$pc_sum/agg_temp$population)
+
+fn1 = sprintf("%s", model)
+fn2 = sprintf("%s.csv", today)
+write.csv(agg_total, file= paste('PcResults_', fn1, '_AggregatedTestResults_MajorityVote_', fn2, sep=""), row.names = F )
+
+
+
+```
+
+
+#WRONG
+```{r}
 
 #Import PcResults_TestResults csv for the classifier
 agg_data <- read.csv('data/PcResults_TestResults_PMN_20181209.csv')
 
-agg_data <- read.csv('data/PcResults_TestResults_PN_20181209.csv')
-
-agg_data <- read.csv('data/PcResults_TestResults_PM_20181209.csv')
-
 
 #1. How many times was each acoustic encounter represented in the test data?
 AcEncs_Test <- aggregate(x = agg_data, 
-                               by = list(unique.values = agg_data$EncounterID), 
-                               FUN = length)
+                               by = list(unique.values = agg_data$EncounterID),                                FUN = length)
 
+#2. Loop the subsetting to sum up the number of times the number of correctly classified whistles exceeded the threshold for each acoustic encounter.
 
-#2. Loop the subsetting to sum up things 
 IDs <- unique(agg_data$EncounterID)
 filtByEnc = NULL
 filtCorrect = NULL
@@ -57,10 +112,91 @@ agg_data_sum <- mutate(agg_data_sum, new = agg_x/agg_y)
 
 fn = sprintf("%s_%s_%s.csv", thld, model, today)
 write.csv(agg_data_sum, file= paste('PcResults_AggregatedTestResults_MajorityVote_thld', fn, sep=""), row.names = F )
-write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
+#write.csv(filtByEnc,'C:\\Users\\Yvonne\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\PcResults_OrderedTestResults_PM_20180830.csv', row.names = F )
+```
+
+##ANOVA Action
+```{r}
+
+
+require(dplyr)
+require(tidyverse)
+
+#Format agg_x so each population represents a column with group
+agg_data$population[agg_data$EncounterID == "M2"]='MHI'
+agg_data$population[agg_data$EncounterID ==  "M3"]='MHI'
+agg_data$population[agg_data$EncounterID ==  "M4"]='MHI'
+agg_data$population[agg_data$EncounterID ==  "M1"]='MHI'
+agg_data$population[agg_data$EncounterID ==  "P6"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P1"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P2"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P4"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P5"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P3"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P8"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "P7"]='Pelagic'
+agg_data$population[agg_data$EncounterID ==  "N2"]='NWHI'
+agg_data$population[agg_data$EncounterID ==  "N3"]='NWHI'
+agg_data$population[agg_data$EncounterID ==  "N4"]='NWHI'
+agg_data$population[agg_data$EncounterID ==  "N1"]='NWHI'
+agg_data$population <- as.factor(agg_data$population)
+
+agg_sub <- agg_data %>% filter(CorrectDW > thld) #| CorrectDW < 80)  #Outliers exist past 80 DW
+
+
+agg_sub <- agg_sub[, c(3,8,9)]
+
+m=filter(agg_sub, population=='MHI')
+p=filter(agg_sub, population=='Pelagic')
+n=filter(agg_sub, population=='NWHI')
+
+#Levene's Test of equal variances
+library(car)
+leveneTest(log(n$CorrectDW), n$EncounterID, data=agg_sub) #Null: variances are equal
+shapiro.test(log(agg_data$CorrectDW)) #Null: Sample distribution is normal.
+qqPlot(log(p$CorrectDW))
+
+
+#For unbalanced data between encounters (NOT dealing with unbalanced nested ANOVA)
+m.model = lm(CorrectDW ~ EncounterID, 
+           data=m)
+Anova(m.model, type="II") 
+hist(residuals(m.model), 
+     col="darkgray")
+plot(fitted(m.model), 
+     residuals(m.model))
+
+library(agricolae)
+(HSD.test(m.model, "EncounterID"))
+
+p.model = lm(CorrectDW ~ EncounterID, 
+           data=p)
+Anova(p.model, type="II") 
+hist(residuals(p.model), 
+     col="darkgray")
+plot(fitted(p.model), 
+     residuals(p.model))
+
+(HSD.test(p.model, "EncounterID"))
+
+
+n.model = lm(CorrectDW ~ EncounterID, 
+           data=n)
+Anova(n.model, type="II") 
+hist(residuals(n.model), 
+     col="darkgray")
+plot(fitted(n.model), 
+     residuals(n.model))
+
+(HSD.test(n.model, "EncounterID"))
+
+
+
+
 
 
 ```
+
 
 
 

@@ -25,11 +25,6 @@ library(data.table)
 library(ggplot2)
 
 pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
-<<<<<<< HEAD
-
-#To make the confusion matrix spit out encounters in order
-=======
->>>>>>> bbdd5a62c6fe872c9118be70e33c2fd130189b86
 pcdata$group[pcdata$EncounterID == 'M2'] = 32
 pcdata$group[pcdata$EncounterID == 'M3'] = 33
 pcdata$group[pcdata$EncounterID == 'M4'] = 34
@@ -95,7 +90,6 @@ pcdata.Nuncorr <- pcdata.Nuncorr[order(pcdata.Nuncorr$EncounterID),]
 #levels(pcdata.Nuncorr$EncounterID) <- c("N1", "N2", "N3", "N4" )
 
 ```
-
 ##Pelagic correlation
 ```{r}    
 ##Using only continuous variables, determine the correlated variables within the Pelagic whistles
@@ -137,9 +131,9 @@ prop = 0.75          #proportion of whistles in training data
 ##Random Forest
 ```{r}
 ####Start####
-today = 20190312
-POP = NWHI
-pop.data = pcdata.N
+today = 20190326
+POP = MHI
+pop.data = pcdata.M
 
 
 ptm <- proc.time()
@@ -257,16 +251,18 @@ accuracy.enc <- sum((enc_test$rightPred)/nrow(enc_test)) #sums all 'TRUE' and di
 
 ###RESULTS!!!##################################  
 enc_results.temp <- table(enc_test$EncounterID, enc_prediction)    
+results.enc <- results.enc + enc_results.temp  
 
 
 # Important Variables
   varIMPtemp.enc <- as.data.frame(enc_fit$importance)
-  varIMP.enc <- varIMPtemp.enc[order(varIMPtemp.enc$MeanDecreaseGini), , drop =F]
+  varIMP.enc <- varIMPtemp.enc[order(varIMPtemp.enc$MeanDecreaseAccuracy), , drop =F]
   varIMPtotal.enc <- rbind(varIMPtotal.enc, "REP"=rep, varIMP.enc)
 
 
-results.enc <- results.enc + enc_results.temp  
-
+if( (rep %% 10) == 0){ # take rep, divide by 10, outputs remainder
+  print(paste("Done with", rep, "step"))
+} 
 
 }
 
@@ -279,30 +275,20 @@ proc.time()-ptm
 
 fn = sprintf("_%s_%s.csv", unique(pop.data$population), today)
 
-write.table(results.enc, file= paste('PcResults_Encounters_TotalResults', fn, sep=""), append = T, row.names = T, col.names=T, sep = ",")
+write.table(results.enc, file= paste('PcResults_Encounters_TotalResults', fn, sep=""), append = F, row.names = T, col.names=T, sep = ",")
 
 write.table(varIMPtotal.enc, paste('PcResults_Encounters_ImpVar',fn,sep=""), sep=",", append=TRUE)
 
-false=nrow(subset(enc_test, enc_test$rightPred=='FALSE'))/nrow(enc_test)*100 #percentage of misclassified whistles
-falsehope <- c(falsehope, false)
 
 ```
 Kappa Calculations
 ```{r}
-confmat <- read.csv('data/results/PcResults_Encounters_TotalResults_MHI_20190312.csv', header=T, row.names = 1)
-<<<<<<< HEAD
+confmat <- read.csv('PcResults_Encounters_TotalResults_MHI_20190326.csv', header=T, row.names = 1)
 
 #matrix dimensions
 # m = 4
 # n = 5
 
-=======
-
-#matrix dimensions
-# m = 4
-# n = 5
-
->>>>>>> bbdd5a62c6fe872c9118be70e33c2fd130189b86
 confmat2 = as.matrix(confmat)
 total_obs = sum(confmat2[ , ])
 

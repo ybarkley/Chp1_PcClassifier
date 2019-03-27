@@ -90,12 +90,18 @@ top_10PM <- top_10all[top_10all$model == 'RF_PM',]
 #Find the range of each importance score of each variable for each model
 varmin <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), min)
 varmax <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), max)
+varmed <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), median)
+
 
 names(varmin)[names(varmin) == "x"] <- "Min"
 names(varmax)[names(varmax) == "x"] <- "Max"
+names(varmed)[names(varmed) == "x"] <- "Median"
 
-varRange <- cbind(varmin, "Max" =varmax$Max)
-write.csv(varRange, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\Variable Importance/PcResults_Top10ImpVars_Range.csv", row.names = F)
+
+varRange <- cbind(varmin, "Max" =varmax$Max, "Median"=varmed$Median)
+
+
+write.csv(varRange, 'PcResults_Top10ImpVars_Range_20190326.csv', row.names = F)
 
 
 top_10tab <- as.data.frame(sort(table(top_10$Variable)), decreasing = F)
