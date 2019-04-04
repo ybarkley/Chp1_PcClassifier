@@ -93,7 +93,11 @@ pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
 
 #20190318
 #These are the common uncorrelated variables for each population used for the KS test
-pcdata.KS <- pcdata[, c(1:4,9,22:24,28:31,46,47,51:53)]
+#pcdata.KS <- pcdata[, c(1:4,9,22:24,28:31,46,47,51:53)]
+
+#20180401
+#These are the variables found to be significantly different by the KS test
+pcdata.KS <- pcdata[, c(1:4,9,23,24,31,47)]
 
 
 
@@ -407,28 +411,42 @@ sink()
 ``` 
  
  
-###Write outputs to OneDrive
+###Write outputs to project directory
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ConfusionMatrix_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "data/results/PcResults__PMN_KS_ConfusionMatrix_20190401.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_Results, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalResults_PMN_20180824.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "data/results/PcResults__PMN_KS_TotalResults_20190401.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalWhistleClass_PMN_20180824.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "data/results/PcResults__PMN_KS_TotalWhistleClass_20190401.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TrainSets_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll, "data/results/PcResults__PMN_KS_TrainSets_20190401.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TestResults_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll, "data/results/PcResults__PMN_KS_TestResults_20190401.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_ImportantVars_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal, "data/results/PcResults__PMN_KS_PcResults_ImportantVars_20190401.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TunedParameters_PMN_20180824.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll, "data/results/PcResults__PMN_KS_TunedParameters_20190401.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018/PcResults_TotalModels_PMN_20180824.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "data/results/PcResults__PMN_KS_PcResults_TotalModels_20190401.csv", append = T, col.names=F, sep = ",")
 
 ```
- 
+ #Kappa Coefficient
+```{r}
+####Load confusion matrix####
+cfmat_pmn <- read.csv('data/results/PcResults_PMN_KS_ConfusionMatrix_20190401.csv')
+cfmat_pmn <- as.matrix(cfmat_pmn[-4,])
+
+cfmat_pmn_obs <- sum(diag(cfmat_pmn))/sum(cfmat_pmn)
+cfmat_pmn_exp <- sum(colSums(cfmat_pmn)*rowSums(cfmat_pmn)/sum(cfmat_pmn))/sum(cfmat_pmn)
+
+cfmat_pmn_kappa <- (cfmat_pmn_obs-cfmat_pmn_exp)/(1-cfmat_pmn_exp)
+
+
+
+
+```
 
 
 ```{r}
