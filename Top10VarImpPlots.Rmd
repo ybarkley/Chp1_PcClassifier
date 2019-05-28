@@ -19,13 +19,15 @@ library(dplyr)
 ```{r}
 #read in important variables spreadsheet
 
-top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ImportantVars_PMN_20181209_EDIT.csv")
-top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PN_100x/PcResults_ImportantVars_PN_20181209_edit.csv")
-top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PM_100x/PcResults_ImportantVars_PM_20181209_edit.csv")
+# top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_ImportantVars_PMN_20181209_EDIT.csv")
+# top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PN_100x/PcResults_ImportantVars_PN_20181209_edit.csv")
+# top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PM_100x/PcResults_ImportantVars_PM_20181209_edit.csv")
+
+top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\March 2019\\PcResults_PMN_ImportantVars_20190322_EDIT.csv")
+top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PN_ImportantVars_20190527.csv")
+top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PM_ImportantVars_20190325_EDIT.csv")
+
 #Using dplyr functions
-
-
-
 top_10 <- droplevels(top_vars %>%
   group_by(Rep) %>%
   top_n(n = 10, wt = MeanDecreaseAccuracy))
@@ -47,11 +49,11 @@ top_10PN$model <- 'RF_PN'
 top_10PM$model <- 'RF_PM'
 
 
-top_10all <- rbind(top_10, top_10PN, top_10PM)
+top_10all <- rbind(top_10, top_10PN, top_10PM) 
 
-#Change variable names before tabulating
+#Change variable names before tabulating, Variable must be a character for grep.
 top_10all$Variable[grep("DURATION", top_10all$Variable)] <- "Duration"
-top_10all$Variable[grep("FREQQUARTER3", top_10all$Variable)] <- "ThirdQuarterFreq"
+top_10all$Variable[grep("FREQQUARTER3", top_10all$Variable)] <- "QuarterFreq3"
 top_10all$Variable[grep("FREQSPREAD", top_10all$Variable)] <- "FreqSpread"
 top_10all$Variable[grep("FREQCOFM", top_10all$Variable)] <- "CoeffFreqMod"
 top_10all$Variable[grep("FREQPOSSLOPEMEAN", top_10all$Variable)] <- "MeanPosSlope"
@@ -62,7 +64,7 @@ top_10all$Variable[grep("INFLMEANDELTA", top_10all$Variable)] <- "MeanTimeBtwnIn
 top_10all$Variable[grep("INFLSTDDEVDELTA", top_10all$Variable)] <- "SDTimeBtwnInfl"
 top_10all$Variable[grep("FREQSWEEPFLATPERCENT", top_10all$Variable)] <- "PctZeroSlope"
 top_10all$Variable[grep("INFLMEANDELTA", top_10all$Variable)] <- "MeanTimeBtwnInfl"
-top_10all$Variable[grep("FREQABSSLOPEMEAN", top_10all$Variable)] <- "AbsSlopeMean"
+top_10all$Variable[grep("FREQABSSLOPEMEAN", top_10all$Variable)] <- "MeanAbsSlope"
 top_10all$Variable[grep("NUMSWEEPSFLATUP", top_10all$Variable)] <- "NumTimesZeroToPos"
 top_10all$Variable[grep("FREQSLOPEMEAN", top_10all$Variable)] <- "MeanSlope"
 top_10all$Variable[grep("NUMSWEEPSFLATUP", top_10all$Variable)] <- "NumTimesZeroToPos"
@@ -123,7 +125,7 @@ write.csv(top_10tabPN, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results
 write.csv(top_10tabPM, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PM_20181209.csv", row.names = F)
 
 
-top_10tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_ALL_20181209.csv")
+top_10tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\Variable Importance/PcResults_Top10ImpVarsTABLE_ALL_20181209.csv")
 
 #Create a plot to visually represent table
 #https://stackoverflow.com/questions/5804226/get-a-histogram-plot-of-factor-frequencies-summary
@@ -131,6 +133,8 @@ top_10tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\
 # with(top_5, dotplot(Variable, horizontal = FALSE))
 ```
 
+
+Heat map of most important variables (originally removed from manuscript)
 ```{r}
 require(ggplot2)
 # make ROCCA.Variables an ordered factor
