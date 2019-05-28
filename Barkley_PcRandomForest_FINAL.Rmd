@@ -282,8 +282,9 @@ output_TestSetAll <-rbind(output_TestSetAll, output_TestSet)
 #6.
   # Important Variables
   varIMPtemp <- as.data.frame(importance(fit))
-  varIMP <- varIMPtemp[order(varIMPtemp$MeanDecreaseAccuracy), , drop =F]
-  output_varIMPtotal <- rbind(output_varIMPtotal, "REP"=rep, varIMP)
+  varIMP <- varIMPtemp[order(varIMPtemp$MeanDecreaseAccuracy), ,drop =F]
+  varIMP$Rep <- rep
+  output_varIMPtotal <- rbind(output_varIMPtotal, varIMP)
 
 
 #df to show the prediction of each individual whistle per encounter (THIS IS DOCUMENTED IN 'g')

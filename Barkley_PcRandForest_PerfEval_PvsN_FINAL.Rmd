@@ -190,7 +190,7 @@ npel  = 1           # number of pelagic schools to group together
 nnwhi = 1           # number of northwest HI schools to group together
 nmhi  = 1           # number of main HI schools to group together
 t = 0.6
-w = 150              # Number of whistles randomly pulled from each group 
+w = 150             # Number of whistles randomly pulled from each group 
 ntest = 1           # number of groups to randomly pull for test dataset
 n_samps = 100         #number of times you want to resample from your dataset
 
@@ -229,6 +229,7 @@ output_varIMPtotal.pn = NULL
 fit_error_rate.pn = c()
 accuracies.pn = c()
 pc_classPN = NULL
+varIMP.pn2 = NULL
 
 #### OVERALL LOOP TO DERIVE MEANS AND STANDARD DEVS ####  
 for(rep in 1:n_samps){ 
@@ -469,9 +470,10 @@ output_TestSetAll.pn <-rbind(output_TestSetAll.pn, output_TestSet.pn)
 
 #6.
   # Important Variables
-  varIMPtemp.pn <- as.data.frame(fit.pn$importance)
-  varIMP.pn <- varIMPtemp.pn[order(varIMPtemp.pn$MeanDecreaseGini), , drop =F]
-  output_varIMPtotal.pn <- cbind(rep, rbind(output_varIMPtotal.pn, varIMP.pn))
+  varIMPtemp.pn <- as.data.frame(importance(fit.pn))
+  varIMP.pn <- varIMPtemp.pn[order(varIMPtemp.pn$MeanDecreaseAccuracy), , drop =F]
+  varIMP.pn$Rep <- rep
+  output_varIMPtotal.pn <- rbind(output_varIMPtotal.pn, varIMP.pn)
   
 
 
@@ -506,9 +508,9 @@ seRealP.pn <- se(realP.pn)
 seRealN.pn <- se(realN.pn)
 
  
-date='20181212'
+date='20190528'
 #Combine means and std errors into matrix
-sink("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\ConfMatrixPN_means_20181210.txt", append=T)
+sink("data\\results\\ConfMatrix_PN_means_20190528.txt", append=T)
 PNMmeans.pn <- cbind("PEL"= c(meanRealP.pn), "NWHI"=c(meanRealN.pn)) #means
 PNMse.pn <- cbind("PEL"= c(seRealP.pn), "NWHI"=c(seRealN.pn)) #standard errors
 PNMtotal.pn <- rbind("Means" = PNMmeans.pn, "Stand Err" = PNMse.pn)
@@ -522,28 +524,28 @@ sink()
 
 ```
 
-#save to desktop OneDrive
+#save to project folder
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass.pn, "data/results/PcResults_PN_ConfusionMatrix_20181209.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass.pn, "data/results/PcResults_PN_ConfusionMatrix_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_results_pn, "data/results/PcResults_PN_TotalResults_20181209.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_results_pn, "data/results/PcResults_PN_TotalResults_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_WhistleClass.pn, "data/results/PcResults_PN_TotalWhistleClass_20181209.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass.pn, "data/results/PcResults_PN_TotalWhistleClass_20190528.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll.pn, "data/results/PcResults_PN_TrainSets_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll.pn, "data/results/PcResults_PN_TrainSets_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll.pn, "data/results/PcResults_PN_TestResults_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll.pn, "data/results/PcResults_PN_TestResults_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal.pn, "data/results/PcResults_PN_ImportantVars_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pn, "data/results/PcResults_PN_ImportantVars_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll.pn, "data/results/PcResults_PN_TunedParameters_20181209.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll.pn, "data/results/PcResults_PN_TunedParameters_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit.pn, "data/results/PcResults_PN_TotalModels_20181209.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit.pn, "data/results/PcResults_PN_TotalModels_20190528.csv", append = T, col.names=F, sep = ",")
 
 #9) Save encounter classifications based on majority of whistles
-write.table(pc_classPN, "data/results/PcResults_PN_EncounterClass_20190325.csv", append = F, col.names=T, row.names = F, sep = ",")
+write.table(pc_classPN, "data/results/PcResults_PN_EncounterClass_20190528.csv", append = F, col.names=T, row.names = F, sep = ",")
 
 ```
 
