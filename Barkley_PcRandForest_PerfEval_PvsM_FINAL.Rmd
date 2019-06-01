@@ -470,9 +470,9 @@ seRealP.pm <- se(realP.pm)
 seRealM.pm <- se(realM.pm)
 
  
-date='20190527'
+date='20190528'
 #Combine means and std errors into matrix
-sink("data\\results\\ConfMatrix_PM_means_20190325.txt", append=T)
+sink("data\\results\\ConfMatrix_PM_means_20190528.txt", append=T)
 PNMmeans.pm <- cbind("PEL"= c(meanRealP.pm), "MHI"=c(meanRealM.pm)) #means
 PNMse.pm <- cbind("PEL"= c(seRealP.pm), "MHI"=c(seRealM.pm)) #standard errors
 PNMtotal.pm <- rbind("Means" = PNMmeans.pm, "Stand Err" = PNMse.pm)
@@ -490,24 +490,24 @@ sink()
 ```{r}
 
 #Save overall confusion matrix
-write.table(output_CorrectClass.pm, "data\\results/PcResults_PM_ConfusionMatrix_20190527.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass.pm, "data\\results/PcResults_PM_ConfusionMatrix_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
-write.table(output_results_pm, "data\\results\\PcResults_PM_TotalResults_20190527.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_results_pm, "data\\results\\PcResults_PM_TotalResults_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 #write.table(output_WhistleClass.pm, "data\\results\\PcResults_PM_TotalWhistleClass_20190325.csv", append = T, row.names = F, col.names=T, sep = ",")
 
-write.table(output_TrainSetAll.pm, "data\\results\\PcResults_PM_TrainSets_20190527.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll.pm, "data\\results\\PcResults_PM_TrainSets_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_TestSetAll.pm, "data\\results\\PcResults_PM_TestResults_20190527.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll.pm, "data\\results\\PcResults_PM_TestResults_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_varIMPtotal.pm, "data\\results\\PcResults_PM_ImportantVars_20190527.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal.pm, "data\\results\\PcResults_PM_ImportantVars_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(tunedAll.pm, "data\\results\\PcResults_PM_TunedParameters_20190527.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll.pm, "data\\results\\PcResults_PM_TunedParameters_20190528.csv", append = T, col.names=T, sep = ",")
 
-write.table(output_ModelFit.pm, "data\\results\\PcResults_PM_TotalModels_20190527.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit.pm, "data\\results\\PcResults_PM_TotalModels_20190528.csv", append = T, col.names=F, sep = ",")
 
 
-write.table(pc_classPM, "data/results/PcResults_PM_EncounterClass_20190527.csv", append = F, col.names=T, row.names = F, sep = ",")
+write.table(pc_classPM, "data/results/PcResults_PM_EncounterClass_20190528.csv", append = F, col.names=T, row.names = F, sep = ",")
 
 ```
 

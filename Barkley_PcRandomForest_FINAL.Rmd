@@ -51,7 +51,7 @@ nmhi  = 1           # number of MHI schools to group together
 w = 150             # Number of whistles randomly pulled from each group 
 t= 0.5              # threshold for classification (percentage)
 ntest = 1           # number of groups to randomly pull for test dataset
-n_samps = 2         # number of times to run analysis
+n_samps = 100         # number of times to run analysis
 ```
 
 
@@ -322,7 +322,7 @@ seRealM <- se(realM)
  
 date='20190321'
 #Combine means and std errors into matrix
-sink("data\\results\\ConfMatrixPMN_means_20190321.txt", append=T)
+sink("data\\results\\ConfMatrixPMN_means_20190528.txt", append=T)
 PNMmeans <- cbind("PEL"= c(meanRealP), "NWHI" = c(meanRealN), "MHI"=c(meanRealM)) #means
 PNMse <- cbind("PEL"= c(seRealP), "NWHI" = c(seRealN), "MHI"=c(seRealM)) #standard errors
 PNMtotal <- rbind("Means" = PNMmeans, "Stand Err" = PNMse)
@@ -340,31 +340,31 @@ sink()
 ```{r}
 
 #1) Save overall confusion matrix
-write.table(output_CorrectClass, "data/results/PcResults_PMN_ConfusionMatrix_20190322.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_CorrectClass, "data/results/PcResults_PMN_ConfusionMatrix_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 #2) Save all confusion matrices for each iteration
-write.table(output_Results, "data/results/PcResults_PMN_TotalResults_20190322.csv", append = T, row.names = T, col.names=T, sep = ",")
+write.table(output_Results, "data/results/PcResults_PMN_TotalResults_20190528.csv", append = T, row.names = T, col.names=T, sep = ",")
 
 #3) Save all individual whistle classifications
-write.table(output_WhistleClass, "data/results/PcResults_PMN_TotalWhistleClass_20190322.csv", append = T, row.names = F, col.names=T, sep = ",")
+write.table(output_WhistleClass, "data/results/PcResults_PMN_TotalWhistleClass_20190528.csv", append = T, row.names = F, col.names=T, sep = ",")
 
 #4) Save all training set combinations
-write.table(output_TrainSetAll, "data/results/PcResults_PMN_TrainSets_20190322.csv", append = T, col.names=T, sep = ",")
+write.table(output_TrainSetAll, "data/results/PcResults_PMN_TrainSets_201905282.csv", append = T, col.names=T, sep = ",")
 
 #5) Save all test set combinations with predictions
-write.table(output_TestSetAll, "data/results/PcResults_PMN_TestResults_20190322.csv", append = T, col.names=T, sep = ",")
+write.table(output_TestSetAll, "data/results/PcResults_PMN_TestResults_20190528.csv", append = T, col.names=T, sep = ",")
 
 #6) Save important variables lists for each iteration
-write.table(output_varIMPtotal, "data/results/PcResults_PMN_ImportantVars_20190322.csv", append = T, col.names=T, sep = ",")
+write.table(output_varIMPtotal, "data/results/PcResults_PMN_ImportantVars_20190528.csv", append = T, col.names=T, sep = ",")
 
 #7) Save all tuned parameters for each iteration
-write.table(tunedAll, "data/results/PcResults_PMN_TunedParameters_20190322.csv", append = T, col.names=T, sep = ",")
+write.table(tunedAll, "data/results/PcResults_PMN_TunedParameters_20190528.csv", append = T, col.names=T, sep = ",")
 
 #8) Save model fit confusion matrices for each iteration
-write.table(output_ModelFit, "data/results/PcResults_PMN_TotalModels_20190322.csv", append = T, col.names=F, sep = ",")
+write.table(output_ModelFit, "data/results/PcResults_PMN_TotalModels_20190528.csv", append = T, col.names=F, sep = ",")
 
 #9) Save encounter classifications based on majority of whistles
-write.table(pc_class, "data/results/PcResults_PMN_EncounterClass_20190322.csv", append = F, col.names=T, row.names = F, sep = ",")
+write.table(pc_class, "data/results/PcResults_PMN_EncounterClass_20190528.csv", append = F, col.names=T, row.names = F, sep = ",")
 ```
  
  

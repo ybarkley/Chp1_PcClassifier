@@ -91,6 +91,7 @@ pcdata.Nuncorr <- pcdata.Nuncorr[order(pcdata.Nuncorr$EncounterID),]
 
 ```
 ##Pelagic correlation
+
 ```{r}    
 ##Using only continuous variables, determine the correlated variables within the Pelagic whistles
 pcsub<-pcdata.P[,7:53]
@@ -104,12 +105,9 @@ pcdata.Puncorr <- cbind(pcdata.P[, c(1:6)], pcsubcor_P)
 
 #levels(pcdata.Puncorr$EncounterID) <- c("P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8" )
 pcdata.Puncorr <- pcdata.Puncorr[order(pcdata.Puncorr$EncounterID),]
-
-
 ```
 
 ```{r}
-
 #pcdata <- read.csv('data/BigRoccaFile_PMN_TowedAll_EDIT_20181124.csv')
 
 

@@ -327,7 +327,7 @@ p_ks <- ggplot(ks, aes(p.value, variable)) +
 p_ks + guides(shape = guide_legend(override.aes = list(size = 5)))+
        geom_vline(xintercept=0.05, linetype='dashed', color='red', size=1)
 
-ggsave('data/results/KS_plot_20190424.png', width = 12, height = 8, units = "in", type = "cairo-png")
+ggsave('data/results/KS_plot_20190528.pdf', width = 12, height = 8, units = "in", device = "pdf")
 
 #ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/KS TEST_20190319-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 

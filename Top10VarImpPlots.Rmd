@@ -23,9 +23,9 @@ library(dplyr)
 # top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PN_100x/PcResults_ImportantVars_PN_20181209_edit.csv")
 # top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PM_100x/PcResults_ImportantVars_PM_20181209_edit.csv")
 
-top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\March 2019\\PcResults_PMN_ImportantVars_20190322_EDIT.csv")
-top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PN_ImportantVars_20190527.csv")
-top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PM_ImportantVars_20190325_EDIT.csv")
+top_vars <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PMN_ImportantVars_20190528.csv")
+top_varsPN <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PN_ImportantVars_20190528.csv")
+top_varsPM <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2019\\PcResults_PM_ImportantVars_20190528.csv")
 
 #Using dplyr functions
 top_10 <- droplevels(top_vars %>%
@@ -40,9 +40,9 @@ top_10PM <- droplevels(top_varsPM %>%
   group_by(Rep) %>%
   top_n(n = 10, wt = MeanDecreaseAccuracy))
 
-top_10 <- top_10[,c(1,2,6)]
-top_10PN <- top_10PN[, c(1,2,5)]
-top_10PM <- top_10PM[, c(1,2,5)]
+top_10 <- top_10[,c(1,5,7)]
+top_10PN <- top_10PN[, c(1,4,6)]
+top_10PM <- top_10PM[, c(1,4,6)]
 
 top_10$model <- 'RF_PNM'
 top_10PN$model <- 'RF_PN'
@@ -50,6 +50,7 @@ top_10PM$model <- 'RF_PM'
 
 
 top_10all <- rbind(top_10, top_10PN, top_10PM) 
+
 
 #Change variable names before tabulating, Variable must be a character for grep.
 top_10all$Variable[grep("DURATION", top_10all$Variable)] <- "Duration"
@@ -90,6 +91,7 @@ top_10PM <- top_10all[top_10all$model == 'RF_PM',]
 
 
 #Find the range of each importance score of each variable for each model
+
 varmin <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), min)
 varmax <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), max)
 varmed <- aggregate(top_10all$MeanDecreaseAccuracy, list(Variable =top_10all$Variable, Model = top_10all$model), median)
@@ -103,7 +105,7 @@ names(varmed)[names(varmed) == "x"] <- "Median"
 varRange <- cbind(varmin, "Max" =varmax$Max, "Median"=varmed$Median)
 
 
-write.csv(varRange, 'PcResults_Top10ImpVars_Range_20190326.csv', row.names = F)
+write.csv(varRange, 'PcResults_Top10ImpVars_Range_20190528.csv', row.names = F)
 
 
 top_10tab <- as.data.frame(sort(table(top_10$Variable)), decreasing = F)
@@ -117,8 +119,11 @@ top_10tabPM$model <- 'RF_PM'
 
 top_10tab_all <- rbind(top_10tab, top_10tabPN, top_10tabPM)
 top_10tab_all$Var1 <- as.character(top_10tab_all$Var1)
+```
 
-
+May 28, 2019 - oops
+**accidentally overwrote results from 20181209 with results from 20190528
+```{r}
 write.csv(top_10all, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_ALL_20181209.csv", row.names = F)
 write.csv(top_10tab, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PMN_20181209.csv", row.names = F)
 write.csv(top_10tabPN, "C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\20181209_PMN_100x/PcResults_Top10ImpVarsTABLE_PN_20181209.csv", row.names = F)
@@ -134,7 +139,47 @@ top_10tab <- read.csv("C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\
 ```
 
 
-Heat map of most important variables (originally removed from manuscript)
+May 2019
+```{r}
+#https://stackoverflow.com/questions/42045947/plot-min-max-median-for-each-x-value-in-geom-pointrange
+library(dplyr)
+library(ggplot2)
+# summary_diamonds <- diamonds %>% 
+#     group_by(cut) %>% 
+#     summarise(lower = min(depth), upper = max(depth), p = median(depth))
+# 
+# ggplot(data = summary_diamonds, mapping = aes(x = cut, y = p)) +
+#     geom_pointrange(mapping = aes(ymin = lower, ymax = upper))
+
+summary_variables <- top_10all %>% 
+    group_by(model, Variable) %>% 
+    summarise(Minimum = min(MeanDecreaseAccuracy), Maximum = max(MeanDecreaseAccuracy), Median = median(MeanDecreaseAccuracy))
+
+summary_variables$model <- factor(summary_variables$model, levels=c("RF_PNM", "RF_PN","RF_PM"))
+
+write.csv(summary_variables, 'data/results/PcResults_ImpVars_Summary_20190528.csv', row.names = F)
+
+ggplot(data = summary_variables, mapping = aes(x = Variable, y = Median)) +
+    geom_pointrange(mapping = aes(ymin = Minimum, ymax = Maximum, color = model), position = position_dodge(width=0.5))+ 
+labs(title="Range of Mean Decrease Accuracies for Top 10 Important Variables") +
+    theme_bw()+
+    theme(plot.background = element_rect(fill = "white"),
+          axis.text.x=element_text(size=12, angle = 60, hjust = 1),
+          axis.text.y=element_text(size=12),
+          axis.title = element_text(size=13, hjust=0.5),
+          plot.title=element_text(size=16, hjust=0.5, face="bold", colour="black", vjust=-1)          )  +
+    #scale_color_manual(values=c("#999999", "#E69F00", "#56B4E9"), name='Model')
+    scale_color_brewer(palette = "Dark2", name='Model')+
+    scale_y_continuous(breaks = seq(0,150,25))
+
+ggsave('data/results/VarImp_Graph_20190528.pdf', width = 12, height = 8, units = "in", device = "pdf")  
+
+```
+
+
+
+March 2019
+Scatter plot and Heat map of most important variables (originally removed from manuscript)
 ```{r}
 require(ggplot2)
 # make ROCCA.Variables an ordered factor
@@ -167,13 +212,13 @@ p
 ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/PcResults_Top10ImpVarsTABLE_ALL_20181212-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
 
-names(top_10tab_all)[names(top_10tab_all) == "Freq"] <- "Frequency"
-
 #heat map
+
 require(RColorBrewer)
+names(top_10tab_all)[names(top_10tab_all) == "Freq"] <- "Frequency"
 hm.palette <- colorRampPalette(rev(brewer.pal(11, 'Paired')), space='Lab')
 heat <- ggplot(top_10tab_all, aes(model, Var1)) + 
-        labs(x="", y="Whistle Variable", title = "Most Important Variables for Whistle Classification") +
+        labs(x="", y="Whistle Variable", title = "Frequency of Most Important Variables for Whistle Classification") +
   theme(plot.background = element_rect(fill = "white"),
         axis.text.x=element_text(size=15, angle = 90, hjust = 1, colour = 'black'), #5 for all encounters
         axis.text.y=element_text(size=12), #8 for all encounters
@@ -191,7 +236,7 @@ heat
 
 #
 
-ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/PcResults_Top10ImpVarsTABLE_ALL_20181213_HeatMap.png', width = 12, height = 8, units = "in", type = "cairo-png")  
+ggsave('data/results/PcResults_Top10ImpVarsTABLE_ALL_20190528_HeatMap.pdf', width = 12, height = 8, units = "in", device = "pdf")  
 
 #Heat map from rfpermute
 
