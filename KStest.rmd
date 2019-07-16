@@ -304,7 +304,7 @@ ks$comparison <- factor(ks$comparison, levels = c("Pelagic-NWHI","Pelagic-MHI" ,
 
 
 # require(ggplot2)
-
+tiff("data/results/Barkleyetal_Figure4_300dpi_20190715d.tiff", units="cm", width=20, height=13, res=300)
 p_ks <- ggplot(ks, aes(p.value, variable)) + 
      geom_point(aes(pch=factor(comparison)), size=4.5)+
      
@@ -327,8 +327,9 @@ p_ks <- ggplot(ks, aes(p.value, variable)) +
 p_ks + guides(shape = guide_legend(override.aes = list(size = 5)))+
        geom_vline(xintercept=0.05, linetype='dashed', color='red', size=1)
 
-ggsave('data/results/KS_plot_20190528.pdf', width = 12, height = 8, units = "in", device = "pdf")
-
+dev.off()
+# ggsave('data/results/KS_plot_20190528.pdf', width = 12, height = 8, units = "in", device = "pdf")
+# ggsave('data/results/KS_plot_20190528.png', width = 12, height = 8, units = "in", device = "png")
 #ggsave('C:\\Users\\yvers\\OneDrive\\PHD\\CHP1-FKW\\data\\results\\2018\\plots/KS TEST_20190319-new.png', width = 12, height = 8, units = "in", type = "cairo-png")  
 
 #plot(ks$p.value, ks$variable, log='x' )
